@@ -1,0 +1,176 @@
+﻿@model TsebeCareerPrep.Mvc.Models.InterviewResultsViewModel
+
+@{
+    ViewData["Title"] = "Interview Results";
+}
+
+<div class="container mt-4 mb-5">
+
+    <div class="mb-4">
+        <a asp-controller="InterviewSessions"
+           asp-action="Details"
+           asp-route-id="@Model.Session.Id"
+           class="btn btn-outline-secondary mb-3">
+            Back to Interview Session
+        </a>
+
+        <h1 class="fw-bold">Interview Results</h1>
+
+        <p class="text-muted">
+            Review your submitted answers and compare them
+            with the suggested answers.
+        </p>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                @Model.Session.CategoryName
+            </h5>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+                    <strong>Session ID</strong>
+                    <p class="mb-0">@Model.Session.Id</p>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Status</strong>
+                    <p class="mb-0">
+                        <span class="badge bg-success">
+                            @Model.Session.Status
+                        </span>
+                    </p>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Questions Answered</strong>
+                    <p class="mb-0">
+                        @Model.TotalAnswered
+                    </p>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Started At (UTC)</strong>
+                    <p class="mb-0">
+                        @Model.Session.StartedAt.ToString(
+                            "dd MMM yyyy HH:mm")
+                    </p>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Completed At (UTC)</strong>
+                    <p class="mb-0">
+                        @(Model.Session.CompletedAt?.ToString(
+                            "dd MMM yyyy HH:mm") ?? "Not available")
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <h2 class="h4 fw-bold mb-3">Your Answers</h2>
+
+    @if (Model.Responses == null || !Model.Responses.Any())
+    {
+        <div class="alert alert-info">
+            No submitted answers were found for this interview.
+        </div>
+    }
+    else
+    {
+        @foreach (var response in Model.Responses)
+        {
+            <div class="card shadow-sm mb-4">
+
+                <div class="card-header bg-light">
+
+                    <div class="d-flex flex-wrap
+                        justify-content-between
+                        align-items-center gap-2">
+
+                        <h5 class="mb-0">
+                            Question @response.InterviewQuestionId
+                        </h5>
+
+                        @if (!string.IsNullOrWhiteSpace(
+                            response.DifficultyLevel))
+                        {
+                            <span class="badge bg-secondary">
+                                @response.DifficultyLevel
+                            </span>
+                        }
+
+                    </div>
+
+                </div>
+
+                <div class="card-body">
+
+                    <h6 class="fw-bold">
+                        @response.QuestionText
+                    </h6>
+
+                    <div class="mt-4">
+
+                        <h6 class="text-primary fw-bold">
+                            Your Answer
+                        </h6>
+
+                        <div class="border rounded p-3 bg-light"
+                             style="white-space: pre-wrap;">
+                            @response.AnswerText
+                        </div>
+
+                    </div>
+
+                    <div class="mt-4">
+
+                        <h6 class="text-success fw-bold">
+                            Suggested Answer
+                        </h6>
+
+                        <div class="border rounded p-3"
+                             style="white-space: pre-wrap;">
+                            @response.SuggestedAnswer
+                        </div>
+
+                    </div>
+
+                    <p class="text-muted small mt-3 mb-0">
+                        Submitted:
+                        @response.SubmittedAt.ToString(
+                            "dd MMM yyyy HH:mm") UTC
+                    </p>
+
+                </div>
+
+            </div>
+        }
+    }
+
+    <div class="d-flex flex-wrap gap-2 mt-4">
+
+        <a asp-controller="InterviewCategories"
+           asp-action="Index"
+           class="btn btn-primary">
+            Start Another Interview
+        </a>
+
+        <a asp-controller="InterviewSessions"
+           asp-action="Details"
+           asp-route-id="@Model.Session.Id"
+           class="btn btn-outline-secondary">
+            Back to Session
+        </a>
+
+    </div>
+
+</div>

@@ -1,0 +1,169 @@
+﻿@model TsebeCareerPrep.Mvc.Models.InterviewSessionViewModel
+
+@{
+    ViewData["Title"] = "Interview Session";
+}
+
+<div class="container mt-4 mb-5">
+
+    
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success" role="alert">
+        @TempData["Success"]
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger" role="alert">
+        @TempData["Error"]
+    </div>
+}
+
+
+    <div class="mb-4">
+        <a asp-controller="InterviewCategories"
+           asp-action="Index"
+           class="btn btn-outline-secondary mb-3">
+            Back to Categories
+        </a>
+
+        <h1 class="fw-bold">Interview Session</h1>
+
+        <p class="text-muted">
+            Your interview practice session details.
+        </p>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                @Model.CategoryName
+            </h5>
+        </div>
+
+        <div class="card-body">
+
+            <dl class="row">
+                <dt class="col-sm-4">Session ID</dt>
+                <dd class="col-sm-8">@Model.Id</dd>
+
+                <dt class="col-sm-4">Interview Category</dt>
+                <dd class="col-sm-8">@Model.CategoryName</dd>
+
+                <dt class="col-sm-4">Started At (UTC)</dt>
+                <dd class="col-sm-8">
+                    @Model.StartedAt.ToString("dd MMM yyyy HH:mm")
+                </dd>
+
+                <dt class="col-sm-4">Status</dt>
+                <dd class="col-sm-8">
+                    @if (Model.Status == "InProgress")
+                    {
+                        <span class="badge bg-warning text-dark">
+                            In Progress
+                        </span>
+                    }
+                    else if (Model.Status == "Completed")
+                    {
+                        <span class="badge bg-success">
+                            Completed
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">
+                            @Model.Status
+                        </span>
+                    }
+                </dd>
+
+                @if (Model.CompletedAt.HasValue)
+                {
+                    <dt class="col-sm-4">Completed At (UTC)</dt>
+                    <dd class="col-sm-8">
+                        @Model.CompletedAt.Value.ToString(
+                            "dd MMM yyyy HH:mm")
+                    </dd>
+                }
+            </dl>
+
+            <hr />
+
+            @if (Model.Status == "InProgress")
+            {
+                <div class="alert alert-info">
+                    Your interview session is active.
+                    You can now begin practising questions.
+                </div>
+
+               
+                
+                <div class="d-flex flex-wrap gap-2">
+
+                    <a asp-controller="InterviewSessions"
+                       asp-action="Questions"
+                       asp-route-id="@Model.Id"
+                       class="btn btn-primary">
+                        View Interview Questions
+                    </a>
+
+                    <form asp-controller="InterviewSessions"
+                          asp-action="Complete"
+                          asp-route-id="@Model.Id"
+                          method="post"
+                          onsubmit="return confirm('Are you sure you want to complete this interview? You will not be able to submit additional answers.');">
+
+                        @Html.AntiForgeryToken()
+
+                        <button type="submit"
+                                class="btn btn-success">
+                            Complete Interview
+                        </button>
+
+                    </form>
+
+                </div>
+
+
+
+            }
+
+            
+            else if (Model.Status == "Completed")
+            {
+                <div class="alert alert-success" role="alert">
+                    <strong>Interview Completed!</strong>
+
+                    <p class="mb-0 mt-2">
+                        You have successfully completed your interview.
+                        You can now review your submitted answers
+                        alongside the suggested answers.
+                    </p>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 mt-3">
+
+                    <a asp-controller="InterviewSessions"
+                       asp-action="Results"
+                       asp-route-id="@Model.Id"
+                       class="btn btn-success">
+                        View Interview Results
+                    </a>
+
+                    <a asp-controller="InterviewCategories"
+                       asp-action="Index"
+                       class="btn btn-outline-primary">
+                        Start Another Interview
+                    </a>
+
+                </div>
+            }
+
+            
+
+        </div>
+    </div>
+
+</div>

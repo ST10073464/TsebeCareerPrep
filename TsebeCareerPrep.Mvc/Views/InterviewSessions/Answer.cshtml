@@ -1,0 +1,107 @@
+﻿@model TsebeCareerPrep.Mvc.Models.SubmitInterviewAnswerViewModel
+
+@{
+    ViewData["Title"] = "Answer Interview Question";
+}
+
+<div class="container mt-4 mb-5">
+
+    <div class="mb-4">
+        <a asp-controller="InterviewSessions"
+           asp-action="Details"
+           asp-route-id="@Model.InterviewSessionId"
+           class="btn btn-outline-secondary mb-3">
+            Back to Interview Session
+        </a>
+
+        <h1 class="fw-bold">Interview Practice</h1>
+
+        <p class="text-muted">
+            Read the question carefully and provide your answer.
+        </p>
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                Interview Question
+            </h5>
+        </div>
+
+        <div class="card-body">
+
+            <div class="mb-4">
+                <span class="badge bg-secondary mb-2">
+                    Question @Model.InterviewQuestionId
+                </span>
+
+                <h4 class="mt-2">
+                    @Model.QuestionText
+                </h4>
+            </div>
+
+            <form asp-controller="InterviewSessions"
+                  asp-action="Answer"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <input asp-for="InterviewSessionId"
+                       type="hidden" />
+
+                <input asp-for="InterviewQuestionId"
+                       type="hidden" />
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3">
+                </div>
+
+                <div class="mb-3">
+
+                    <label asp-for="AnswerText"
+                           class="form-label fw-semibold">
+                        Your Answer
+                    </label>
+
+                    <textarea asp-for="AnswerText"
+                              class="form-control"
+                              rows="8"
+                              maxlength="5000"
+                              placeholder="Type your interview answer here..."></textarea>
+
+                    <span asp-validation-for="AnswerText"
+                          class="text-danger"></span>
+
+                    <div class="form-text">
+                        Maximum 5,000 characters.
+                    </div>
+
+                </div>
+
+                <div class="d-flex flex-wrap gap-2">
+
+                    <button type="submit"
+                            class="btn btn-primary">
+                        Submit Answer
+                    </button>
+
+                    <a asp-controller="InterviewSessions"
+                       asp-action="Details"
+                       asp-route-id="@Model.InterviewSessionId"
+                       class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

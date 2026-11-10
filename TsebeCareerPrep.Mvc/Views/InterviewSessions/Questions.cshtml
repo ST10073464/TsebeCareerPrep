@@ -1,0 +1,145 @@
+﻿@model TsebeCareerPrep.Mvc.Models.InterviewSessionQuestionsViewModel
+
+@{
+    ViewData["Title"] = "Interview Questions";
+}
+
+<div class="container mt-4 mb-5">
+
+    <div class="mb-4">
+        <a asp-controller="InterviewSessions"
+           asp-action="Details"
+           asp-route-id="@Model.SessionId"
+           class="btn btn-outline-secondary mb-3">
+            Back to Interview Session
+        </a>
+
+        <h1 class="fw-bold">@Model.CategoryName Interview</h1>
+
+        <p class="text-muted">
+            Session #@Model.SessionId
+            — Select a question to answer.
+        </p>
+
+        @if (Model.Status == "InProgress")
+        {
+            <span class="badge bg-warning text-dark">
+                In Progress
+            </span>
+        }
+        else
+        {
+            <span class="badge bg-success">
+                @Model.Status
+            </span>
+        }
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (Model.Questions == null || !Model.Questions.Any())
+    {
+        <div class="alert alert-info">
+            No interview questions are currently available
+            for this category.
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+
+            @foreach (var question in Model.Questions)
+            {
+                <div class="col-md-6">
+
+                    <div class="card shadow-sm h-100">
+
+                        <div class="card-body d-flex flex-column">
+
+                            <div class="mb-3">
+
+                                <span class="badge bg-secondary">
+                                    Question @question.Id
+                                </span>
+
+                                @if (!string.IsNullOrWhiteSpace(
+                                    question.DifficultyLevel))
+                                {
+                                    <span class="badge bg-info text-dark">
+                                        @question.DifficultyLevel
+                                    </span>
+                                }
+
+                            </div>
+
+                            <h5 class="card-title">
+                                @question.QuestionText
+                            </h5>
+
+                            <div class="mt-auto pt-3">
+
+                                
+                                @if (question.IsAnswered)
+                                {
+                                    <div class="mb-2">
+                                        <span class="badge bg-success">
+                                            &#10003; Answered
+                                        </span>
+                                    </div>
+
+                                    <button type="button"
+                                            class="btn btn-outline-success"
+                                            disabled>
+                                        Already Answered
+                                    </button>
+                                }
+                                else if (Model.Status == "InProgress")
+                                {
+                                    <span class="badge bg-warning text-dark mb-2">
+                                        Not Answered
+                                    </span>
+
+                                    <div>
+                                        <a asp-controller="InterviewSessions"
+                                           asp-action="Answer"
+                                           asp-route-sessionId="@Model.SessionId"
+                                           asp-route-questionId="@question.Id"
+                                           class="btn btn-primary">
+                                            Answer Question
+                                        </a>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary mb-2">
+                                        Not Answered
+                                    </span>
+
+                                    <div>
+                                        <button type="button"
+                                                class="btn btn-secondary"
+                                                disabled>
+                                            Session Completed
+                                        </button>
+                                    </div>
+                                }
+
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+    }
+
+</div>

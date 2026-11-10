@@ -41,14 +41,35 @@
                                 </span>
                             </div>
 
-                            <div class="mt-auto">
+                           
+                            <div class="mt-auto d-flex flex-wrap gap-2">
+
+                                <form asp-controller="InterviewSessions"
+                                      asp-action="Start"
+                                      method="post">
+
+                                    @Html.AntiForgeryToken()
+
+                                    <input type="hidden"
+                                           name="categoryId"
+                                           value="@category.Id" />
+
+                                    <button type="submit"
+                                            class="btn btn-primary">
+                                        Start Interview
+                                    </button>
+
+                                </form>
+
                                 <a asp-controller="InterviewQuestions"
                                    asp-action="Category"
                                    asp-route-id="@category.Id"
-                                   class="btn btn-primary">
+                                   class="btn btn-outline-primary">
                                     Practise Questions
                                 </a>
+
                             </div>
+
 
                         </div>
                     </div>
