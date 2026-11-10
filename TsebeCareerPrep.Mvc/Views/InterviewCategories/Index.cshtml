@@ -1,0 +1,46 @@
+﻿@model List<TsebeCareerPrep.Mvc.Services.InterviewCategoryDto>
+
+@{
+    ViewData["Title"] = "Interview Categories";
+}
+
+<div class="container mt-4">
+    <h1 class="mb-3">Interview Categories</h1>
+
+    <p class="text-muted">
+        Choose an interview category to begin preparing
+        for your career.
+    </p>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info">
+            No interview categories are currently available.
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var category in Model)
+            {
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                @category.Name
+                            </h5>
+
+                            <p class="card-text">
+                                @category.Description
+                            </p>
+
+                            <span class="badge bg-success">
+                                Available
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

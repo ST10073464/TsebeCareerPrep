@@ -1,5 +1,15 @@
 var builder = WebApplication.CreateBuilder(args);
 
+// Register the Interview Categories API service
+
+builder.Services.AddHttpClient<TsebeCareerPrep.Mvc.Services.InterviewCategoryService>(client =>
+{
+    var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"]
+        ?? throw new InvalidOperationException("API BaseUrl is not configured.");
+
+    client.BaseAddress = new Uri(apiBaseUrl);
+});
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
