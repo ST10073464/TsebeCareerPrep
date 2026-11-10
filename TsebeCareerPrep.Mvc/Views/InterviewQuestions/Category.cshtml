@@ -1,0 +1,83 @@
+﻿@model IEnumerable<TsebeCareerPrep.Mvc.Models.InterviewQuestionViewModel>
+
+@{
+    ViewData["Title"] = "Interview Questions";
+    var questions = Model.ToList();
+}
+
+<div class="container py-4">
+
+    <div class="mb-4">
+        <a asp-controller="InterviewCategories"
+           asp-action="Index"
+           class="btn btn-outline-secondary mb-3">
+            Back to Categories
+        </a>
+
+        <h1 class="fw-bold">Interview Questions</h1>
+
+        <p class="text-muted">
+            Practise answering these questions to prepare
+            for your interview.
+        </p>
+    </div>
+
+    @if (questions.Any())
+    {
+        <div class="mb-3">
+            <span class="badge bg-primary">
+                @questions.Count Questions
+            </span>
+        </div>
+
+        @foreach (var question in questions)
+        {
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between
+                        align-items-start gap-2 mb-3">
+
+                        <h5 class="card-title mb-0">
+                            @question.QuestionText
+                        </h5>
+
+                        <span class="badge bg-secondary">
+                            @question.DifficultyLevel
+                        </span>
+                    </div>
+
+                    <details>
+                        <summary class="text-primary"
+                                 style="cursor:pointer;">
+                            View Suggested Answer
+                        </summary>
+
+                        <div class="alert alert-light border mt-3 mb-0">
+                            @if (!string.IsNullOrWhiteSpace(
+                                question.SuggestedAnswer))
+                            {
+                                @question.SuggestedAnswer
+                            }
+                            else
+                            {
+                                <span>
+                                    No suggested answer available yet.
+                                </span>
+                            }
+                        </div>
+                    </details>
+
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="alert alert-info">
+            No interview questions are available
+            for this category yet.
+        </div>
+    }
+
+</div>

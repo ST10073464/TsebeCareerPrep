@@ -44,6 +44,52 @@ namespace TsebeCareerPrep.Api.Migrations
 
                     b.ToTable("InterviewCategories");
                 });
+
+            modelBuilder.Entity("TsebeCareerPrep.Api.Models.InterviewQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DifficultyLevel")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("InterviewCategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("QuestionText")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("SuggestedAnswer")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InterviewCategoryId");
+
+                    b.ToTable("InterviewQuestions");
+                });
+
+            modelBuilder.Entity("TsebeCareerPrep.Api.Models.InterviewQuestion", b =>
+                {
+                    b.HasOne("TsebeCareerPrep.Api.Models.InterviewCategory", "InterviewCategory")
+                        .WithMany()
+                        .HasForeignKey("InterviewCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("InterviewCategory");
+                });
 #pragma warning restore 612, 618
         }
     }
