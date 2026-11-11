@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TsebeCareerPrep.Api.Data;
 using TsebeCareerPrep.Api.Models;
+using TsebeCareerPrep.Api.Services;
 
 namespace TsebeCareerPrep.Api.Controllers
 {
@@ -13,13 +14,18 @@ namespace TsebeCareerPrep.Api.Controllers
     [Route("api/[controller]")]
     public class InterviewSessionsController : ControllerBase
     {
+
         private readonly ApplicationDbContext _context;
+        private readonly IInterviewAssessmentService _assessmentService;
 
         public InterviewSessionsController(
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            IInterviewAssessmentService assessmentService)
         {
             _context = context;
+            _assessmentService = assessmentService;
         }
+
 
         private string? GetCurrentUserId()
         {
@@ -177,6 +183,83 @@ namespace TsebeCareerPrep.Api.Controllers
             });
         }
 
+
+        // POST: api/InterviewSessions/1/reopen
+        [HttpPost("{id:int}/reopen")]
+        public async Task<IActionResult> ReopenInterview(int id)
+        {
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var session = await _context.InterviewSessions
+                .FirstOrDefaultAsync(s =>
+                    s.Id == id &&
+                    s.UserId == userId);
+
+            if (session == null)
+            {
+                return NotFound(new
+                {
+                    message = "Interview session not found."
+                });
+            }
+
+            if (session.Status != "Completed")
+            {
+                return Conflict(new
+                {
+                    message = "Only completed interviews can be reopened."
+                });
+            }
+
+            var totalQuestions = await _context.InterviewQuestions
+                .CountAsync(q =>
+                    q.InterviewCategoryId == session.InterviewCategoryId &&
+                    q.IsActive);
+
+            var answeredQuestions = await _context.InterviewResponses
+                .Where(r =>
+                    r.InterviewSessionId == id &&
+                    r.InterviewQuestion != null &&
+                    r.InterviewQuestion.InterviewCategoryId ==
+                        session.InterviewCategoryId &&
+                    r.InterviewQuestion.IsActive)
+                .Select(r => r.InterviewQuestionId)
+                .Distinct()
+                .CountAsync();
+
+            if (totalQuestions == 0 ||
+                answeredQuestions >= totalQuestions)
+            {
+                return Conflict(new
+                {
+                    message = "There are no unanswered questions to complete."
+                });
+            }
+
+            session.Status = "InProgress";
+            session.CompletedAt = null;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                session.Id,
+                session.Status,
+                session.StartedAt,
+                session.CompletedAt,
+                TotalQuestions = totalQuestions,
+                TotalAnswered = answeredQuestions,
+                RemainingQuestions = totalQuestions - answeredQuestions,
+                message = "Interview reopened successfully."
+            });
+        }
+
+
+        // GET: api/InterviewSessions/1/results
+
         // GET: api/InterviewSessions/1/results
         [HttpGet("{id:int}/results")]
         public async Task<IActionResult> GetSessionResults(int id)
@@ -214,7 +297,8 @@ namespace TsebeCareerPrep.Api.Controllers
             {
                 return BadRequest(new
                 {
-                    message = "Complete the interview before viewing results."
+                    message =
+                        "Complete the interview before viewing results."
                 });
             }
 
@@ -239,13 +323,71 @@ namespace TsebeCareerPrep.Api.Controllers
                 })
                 .ToListAsync();
 
+            var questions = await _context.InterviewQuestions
+                .AsNoTracking()
+                .Where(q =>
+                    q.InterviewCategoryId ==
+                        session.InterviewCategoryId &&
+                    q.IsActive)
+                .OrderBy(q => q.Id)
+                .Select(q => new
+                {
+                    q.Id,
+                    q.QuestionText,
+                    q.DifficultyLevel,
+                    q.SuggestedAnswer
+                })
+                .ToListAsync();
+
+            // Retrieve feedback only for responses belonging
+            // to this authenticated user's completed session.
+            var feedbackByResponseId =
+                new Dictionary<int, InterviewAssessmentFeedback>();
+
+            foreach (var response in responses)
+            {
+                var feedback =
+                    await _assessmentService.GetFeedbackAsync(
+                        response.Id);
+
+                if (feedback != null)
+                {
+                    feedbackByResponseId[response.Id] =
+                        feedback;
+                }
+            }
+
+            // Preserve existing response properties and add
+            // optional assessment feedback.
+            var responsesWithFeedback = responses
+                .Select(r => new
+                {
+                    r.Id,
+                    r.InterviewQuestionId,
+                    r.QuestionText,
+                    r.DifficultyLevel,
+                    r.AnswerText,
+                    r.SuggestedAnswer,
+                    r.SubmittedAt,
+                    AssessmentFeedback =
+                        feedbackByResponseId.TryGetValue(
+                            r.Id,
+                            out var feedback)
+                            ? feedback
+                            : null
+                })
+                .ToList();
+
             return Ok(new
             {
                 Session = session,
                 TotalAnswered = responses.Count,
-                Responses = responses
+                Responses = responsesWithFeedback,
+                Questions = questions
             });
         }
+
+
 
         // GET: api/InterviewSessions/history
         [HttpGet("history")]

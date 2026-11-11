@@ -2,128 +2,207 @@
 
 @{
     ViewData["Title"] = "Interview History";
+
+    var sessions = Model ?? new List<
+        TsebeCareerPrep.Mvc.Models.InterviewHistoryViewModel>();
+
+    var totalSessions = sessions.Count;
+
+    var completedSessions = sessions.Count(
+        s => s.Status == "Completed");
+
+    var inProgressSessions = sessions.Count(
+        s => s.Status != "Completed");
 }
 
-<div class="container py-4 py-md-5">
+<section class="interview-history-page">
 
-    <div class="mb-4">
-        <h1 class="fw-bold">Interview History</h1>
+    <!-- =====================================
+         INTERVIEW HISTORY HEADER
+         ===================================== -->
 
-        <p class="text-muted">
-            Review your previous interview sessions,
-            continue practising, or view completed results.
+    <div class="interview-history-header">
+
+        <p class="interview-history-eyebrow">
+            YOUR CAREER JOURNEY
         </p>
-    </div>
 
-    <div class="d-flex flex-wrap justify-content-between
-        align-items-center gap-3 mb-4">
+        <h1>Interview History</h1>
 
-        <div>
-            <span class="badge bg-primary fs-6">
-                @Model.Count Interview Sessions
-            </span>
+        <p class="interview-history-introduction">
+            Review your previous interview sessions,
+            continue practising and revisit completed
+            results as you develop your interview skills.
+        </p>
+
+        <div class="interview-history-header-stats">
+
+            <div class="interview-history-header-stat">
+                <strong>@totalSessions</strong>
+                <span>Total Sessions</span>
+            </div>
+
+            <div class="interview-history-header-stat">
+                <strong>@completedSessions</strong>
+                <span>Completed</span>
+            </div>
+
+            <div class="interview-history-header-stat">
+                <strong>@inProgressSessions</strong>
+                <span>In Progress</span>
+            </div>
+
         </div>
 
-        <a asp-controller="InterviewCategories"
-           asp-action="Index"
-           class="btn btn-primary">
-            Start New Interview
-        </a>
-
     </div>
 
-    @if (!Model.Any())
-    {
-        <div class="card shadow-sm">
-            <div class="card-body text-center py-5">
 
-                <h4>No Interview History Yet</h4>
+    <!-- =====================================
+         INTERVIEW HISTORY CONTENT
+         ===================================== -->
 
-                <p class="text-muted">
+    <div class="interview-history-content">
+
+        <div class="interview-history-toolbar">
+
+            <div>
+                <h2>Your Interview Sessions</h2>
+
+                <p>
+                    @totalSessions interview
+                    @(totalSessions == 1 ? "session" : "sessions")
+                    recorded.
+                </p>
+            </div>
+
+            <a asp-controller="InterviewCategories"
+               asp-action="Index"
+               class="btn btn-primary interview-history-new-button">
+
+                Start New Interview
+
+            </a>
+
+        </div>
+
+
+        @if (totalSessions == 0)
+        {
+            <!-- Empty state -->
+
+            <div class="interview-history-empty">
+
+                <div class="interview-history-empty-icon"
+                     aria-hidden="true">
+                    📋
+                </div>
+
+                <h3>No Interview History Yet</h3>
+
+                <p>
                     Start your first practice interview
-                    to begin tracking your progress.
+                    to begin tracking your preparation
+                    and progress.
                 </p>
 
                 <a asp-controller="InterviewCategories"
                    asp-action="Index"
-                   class="btn btn-primary">
+                   class="btn btn-primary interview-history-new-button">
+
                     Start Interview
+
                 </a>
 
             </div>
-        </div>
-    }
-    else
-    {
-        <div class="row g-3">
+        }
+        else
+        {
+            <div class="row g-4">
 
-            @foreach (var session in Model)
-            {
-                <div class="col-12 col-md-6 col-xl-4">
+                @foreach (var session in sessions)
+                {
+                    var isCompleted =
+                        session.Status == "Completed";
 
-                    <div class="card h-100 shadow-sm">
+                    <div class="col-12 col-md-6 col-xl-4">
 
-                        <div class="card-body d-flex flex-column">
+                        <article class="interview-history-card h-100">
 
-                            <div class="d-flex justify-content-between
-                                align-items-start gap-2 mb-3">
+                            <div class="interview-history-card-top">
 
-                                <h5 class="card-title fw-bold mb-0">
+                                <h3>
                                     @session.CategoryName
-                                </h5>
+                                </h3>
 
-                                @if (session.Status == "Completed")
+                                @if (isCompleted)
                                 {
-                                    <span class="badge bg-success">
+                                    <span class="interview-history-status completed">
                                         Completed
                                     </span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-warning text-dark">
+                                    <span class="interview-history-status in-progress">
                                         In Progress
                                     </span>
                                 }
 
                             </div>
 
-                            <p class="text-muted small mb-3">
+                            <p class="interview-history-session-id">
                                 Session #@session.Id
                             </p>
 
-                            <div class="mb-3">
+                            <div class="interview-history-card-details">
 
-                                <p class="mb-2">
-                                    <strong>Answers Submitted:</strong>
-                                    @session.TotalAnswered
-                                </p>
+                                <div class="interview-history-detail">
 
-                                <p class="mb-2">
-                                    <strong>Started:</strong>
-                                    @session.StartedAt.ToString(
-                                        "dd MMM yyyy HH:mm") UTC
-                                </p>
+                                    <span>Answers Submitted</span>
+
+                                    <strong>
+                                        @session.TotalAnswered
+                                    </strong>
+
+                                </div>
+
+                                <div class="interview-history-detail">
+
+                                    <span>Started (UTC)</span>
+
+                                    <strong>
+                                        @session.StartedAt.ToString(
+                                            "dd MMM yyyy HH:mm")
+                                    </strong>
+
+                                </div>
 
                                 @if (session.CompletedAt.HasValue)
                                 {
-                                    <p class="mb-0">
-                                        <strong>Completed:</strong>
-                                        @session.CompletedAt.Value.ToString(
-                                            "dd MMM yyyy HH:mm") UTC
-                                    </p>
+                                    <div class="interview-history-detail">
+
+                                        <span>Completed (UTC)</span>
+
+                                        <strong>
+                                            @session.CompletedAt.Value.ToString(
+                                                "dd MMM yyyy HH:mm")
+                                        </strong>
+
+                                    </div>
                                 }
 
                             </div>
 
-                            <div class="mt-auto pt-3">
+                            <div class="interview-history-card-footer">
 
-                                @if (session.Status == "Completed")
+                                @if (isCompleted)
                                 {
                                     <a asp-controller="InterviewSessions"
                                        asp-action="Results"
                                        asp-route-id="@session.Id"
-                                       class="btn btn-success w-100">
+                                       class="btn btn-success interview-history-action">
+
                                         View Results
+
                                     </a>
                                 }
                                 else
@@ -131,20 +210,23 @@
                                     <a asp-controller="InterviewSessions"
                                        asp-action="Questions"
                                        asp-route-id="@session.Id"
-                                       class="btn btn-primary w-100">
+                                       class="btn btn-primary interview-history-action">
+
                                         Continue Interview
+
                                     </a>
                                 }
 
                             </div>
 
-                        </div>
+                        </article>
+
                     </div>
+                }
 
-                </div>
-            }
+            </div>
+        }
 
-        </div>
-    }
+    </div>
 
-</div>
+</section>

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TsebeCareerPrep.Api.Data;
+using TsebeCareerPrep.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -103,6 +104,13 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+
+// Register the interview assessment service.
+builder.Services.AddScoped<
+    IInterviewAssessmentService,
+    InterviewAssessmentService>();
+
 
 var app = builder.Build();
 

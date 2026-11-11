@@ -1,10 +1,13 @@
-﻿
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
+
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0" />
+
+    <meta name="theme-color" content="#071c38" />
 
     <title>@ViewData["Title"] - Tsebe CareerPrep</title>
 
@@ -20,40 +23,95 @@
           asp-append-version="true" />
 </head>
 
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
+<body class="d-flex flex-column min-vh-100">
 
-                <!-- Website branding -->
-                <a class="navbar-brand fw-semibold"
-                   asp-area=""
+    @{
+        var currentController =
+            ViewContext.RouteData.Values["controller"]?.ToString();
+
+        var currentAction =
+            ViewContext.RouteData.Values["action"]?.ToString();
+
+        var isHomePage =
+            currentController == "Home" &&
+            currentAction == "Index";
+
+        var isAuthenticated =
+            User.Identity?.IsAuthenticated == true;
+
+        var isHomeActive =
+            currentController == "Home" &&
+            currentAction == "Index";
+
+        var isPracticeActive =
+            currentController == "InterviewCategories";
+
+        var isProgressActive =
+            currentController == "InterviewSessions" &&
+            currentAction == "Progress";
+
+        var isAccountActive =
+            currentController == "Account" ||
+            (currentController == "InterviewSessions" &&
+             currentAction == "History");
+    }
+
+    <!-- =====================================
+         HEADER / DESKTOP NAVIGATION
+         ===================================== -->
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-light
+                    bg-white border-bottom shadow-sm"
+             aria-label="Main navigation">
+
+            <div class="container">
+
+                <a class="navbar-brand fw-bold text-primary"
                    asp-controller="Home"
                    asp-action="Index">
                     Tsebe CareerPrep
                 </a>
 
-                <!-- Mobile navigation button -->
-                <button class="navbar-toggler"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#mainNavbar"
-                        aria-controls="mainNavbar"
-                        aria-expanded="false"
-                        aria-label="Toggle navigation">
 
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+                <!-- Mobile login status and Menu button -->
+                <div class="mobile-header-controls">
 
-                <!-- Navigation links -->
+                    @if (isAuthenticated)
+                    {
+                        <span class="mobile-login-status"
+                              role="status"
+                              aria-label="You are signed in">
+
+                            <span class="mobile-login-dot"
+                                  aria-hidden="true"></span>
+
+                            Signed in
+                        </span>
+                    }
+
+                    <button class="navbar-toggler"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#mainNavbar"
+                            aria-controls="mainNavbar"
+                            aria-expanded="false"
+                            aria-label="Toggle navigation">
+
+                        <span class="navbar-toggler-icon"></span>
+                        <span class="ms-1 small">Menu</span>
+                    </button>
+
+                </div>
+
+
                 <div class="collapse navbar-collapse"
                      id="mainNavbar">
 
-                    <ul class="navbar-nav me-auto">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
                         <li class="nav-item">
-                            <a class="nav-link text-dark"
-                               asp-area=""
+                            <a class="nav-link"
                                asp-controller="Home"
                                asp-action="Index">
                                 Home
@@ -61,8 +119,34 @@
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link text-dark"
-                               asp-area=""
+                            <a class="nav-link"
+                               asp-controller="InterviewCategories"
+                               asp-action="Index">
+                                Interview Practice
+                            </a>
+                        </li>
+
+                        @if (isAuthenticated)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   asp-controller="InterviewSessions"
+                                   asp-action="History">
+                                    My Interviews
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   asp-controller="InterviewSessions"
+                                   asp-action="Progress">
+                                    My Progress
+                                </a>
+                            </li>
+                        }
+
+                        <li class="nav-item">
+                            <a class="nav-link"
                                asp-controller="Home"
                                asp-action="Privacy">
                                 Privacy
@@ -71,14 +155,13 @@
 
                     </ul>
 
-                    <!-- Authentication navigation -->
-                    <ul class="navbar-nav ms-auto align-items-sm-center">
+                    <ul class="navbar-nav ms-auto align-items-lg-center">
 
-                        @if (User.Identity?.IsAuthenticated == true)
+                        @if (isAuthenticated)
                         {
                             <li class="nav-item">
-                                <span class="nav-link text-dark">
-                                    @User.Identity.Name
+                                <span class="nav-link text-secondary">
+                                    @User.Identity?.Name
                                 </span>
                             </li>
 
@@ -86,25 +169,24 @@
                                 <form asp-controller="Account"
                                       asp-action="Logout"
                                       method="post"
-                                      class="d-flex my-2 my-sm-0">
+                                      class="my-2 my-lg-0 ms-lg-2">
 
                                     @Html.AntiForgeryToken()
 
                                     <button type="submit"
-                                            class="btn btn-outline-danger btn-sm">
+                                            class="btn btn-outline-danger w-100">
                                         Logout
                                     </button>
-
                                 </form>
                             </li>
                         }
                         else
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark"
+                                <a class="btn btn-primary w-100 mt-2 mt-lg-0"
                                    asp-controller="Account"
                                    asp-action="Login">
-                                    Login
+                                    Log In
                                 </a>
                             </li>
                         }
@@ -116,27 +198,132 @@
         </nav>
     </header>
 
-    <!-- Main page content -->
-    <div class="container">
-        <main role="main" class="pb-3">
+    <!-- =====================================
+         MAIN CONTENT
+         ===================================== -->
+
+    <div class="@(isHomePage
+        ? "container-fluid px-0 flex-grow-1"
+        : "container flex-grow-1 py-4")">
+
+        <main role="main">
             @RenderBody()
         </main>
+
     </div>
 
-    <!-- Footer -->
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - Tsebe CareerPrep -
+    <!-- =====================================
+         MOBILE BOTTOM NAVIGATION
+         ===================================== -->
 
-            <a asp-area=""
-               asp-controller="Home"
-               asp-action="Privacy">
-                Privacy
-            </a>
+    <nav class="mobile-bottom-nav"
+         aria-label="Mobile navigation">
+
+        <a asp-controller="Home"
+           asp-action="Index"
+           class="mobile-nav-link @(isHomeActive ? "active" : "")"
+           aria-current="@(isHomeActive ? "page" : null)">
+
+            <span class="mobile-nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="1.8"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" />
+                    <path d="M9 21v-8h6v8" />
+                </svg>
+            </span>
+
+            <span>Home</span>
+        </a>
+
+        <a asp-controller="InterviewCategories"
+           asp-action="Index"
+           class="mobile-nav-link @(isPracticeActive ? "active" : "")"
+           aria-current="@(isPracticeActive ? "page" : null)">
+
+            <span class="mobile-nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="1.8"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v18H6.5A2.5 2.5 0 0 0 4 23z"
+                          transform="translate(0 -2)" />
+                    <path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v18h5.5A2.5 2.5 0 0 1 20 23z"
+                          transform="translate(0 -2)" />
+                </svg>
+            </span>
+
+            <span>Practise</span>
+        </a>
+
+        <a asp-controller="@(isAuthenticated ? "InterviewSessions" : "Account")"
+           asp-action="@(isAuthenticated ? "Progress" : "Login")"
+           class="mobile-nav-link @(isProgressActive ? "active" : "")"
+           aria-current="@(isProgressActive ? "page" : null)">
+
+            <span class="mobile-nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="1.8"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <path d="M4 20V12" />
+                    <path d="M10 20V8" />
+                    <path d="M16 20V4" />
+                    <path d="M22 20H2" />
+                </svg>
+            </span>
+
+            <span>Progress</span>
+        </a>
+
+        <a asp-controller="@(isAuthenticated ? "InterviewSessions" : "Account")"
+           asp-action="@(isAuthenticated ? "History" : "Login")"
+           class="mobile-nav-link @(isAccountActive ? "active" : "")"
+           aria-current="@(isAccountActive ? "page" : null)">
+
+            <span class="mobile-nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="1.8"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 21a8 8 0 0 1 16 0" />
+                </svg>
+            </span>
+
+            <span>Account</span>
+        </a>
+
+    </nav>
+
+    <!-- =====================================
+         FOOTER
+         ===================================== -->
+
+    <footer class="border-top bg-light py-4 mt-auto">
+        <div class="container">
+
+            <div class="d-flex flex-column flex-md-row
+                        justify-content-between align-items-center gap-2">
+
+                <span class="text-secondary small">
+                    &copy; @DateTime.Now.Year Tsebe CareerPrep.
+                    Career preparation and interview practice.
+                </span>
+
+                <a asp-controller="Home"
+                   asp-action="Privacy"
+                   class="text-decoration-none small">
+                    Privacy
+                </a>
+
+            </div>
         </div>
     </footer>
 
-    <!-- JavaScript -->
+    <!-- Scripts -->
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -145,5 +332,6 @@
             asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
 </html>

@@ -220,6 +220,51 @@ namespace TsebeCareerPrep.Api.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("TsebeCareerPrep.Api.Models.InterviewAssessment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AreasForImprovement")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime>("AssessedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AssessmentMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ImprovementGuidance")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("InterviewResponseId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Strengths")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InterviewResponseId")
+                        .IsUnique();
+
+                    b.ToTable("InterviewAssessments");
+                });
+
             modelBuilder.Entity("TsebeCareerPrep.Api.Models.InterviewCategory", b =>
                 {
                     b.Property<int>("Id")
@@ -277,6 +322,55 @@ namespace TsebeCareerPrep.Api.Migrations
                     b.HasIndex("InterviewCategoryId");
 
                     b.ToTable("InterviewQuestions");
+                });
+
+            modelBuilder.Entity("TsebeCareerPrep.Api.Models.InterviewQuestionRubric", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AcceptableAlternatives")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("AssessmentGuidance")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("ClarityMarks")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ExpectedConcepts")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("InterviewQuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("KeyConceptMarks")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PracticalExampleMarks")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TechnicalAccuracyMarks")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InterviewQuestionId")
+                        .IsUnique();
+
+                    b.ToTable("InterviewQuestionRubrics");
                 });
 
             modelBuilder.Entity("TsebeCareerPrep.Api.Models.InterviewResponse", b =>
@@ -396,6 +490,17 @@ namespace TsebeCareerPrep.Api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("TsebeCareerPrep.Api.Models.InterviewAssessment", b =>
+                {
+                    b.HasOne("TsebeCareerPrep.Api.Models.InterviewResponse", "InterviewResponse")
+                        .WithOne()
+                        .HasForeignKey("TsebeCareerPrep.Api.Models.InterviewAssessment", "InterviewResponseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("InterviewResponse");
+                });
+
             modelBuilder.Entity("TsebeCareerPrep.Api.Models.InterviewQuestion", b =>
                 {
                     b.HasOne("TsebeCareerPrep.Api.Models.InterviewCategory", "InterviewCategory")
@@ -405,6 +510,17 @@ namespace TsebeCareerPrep.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("InterviewCategory");
+                });
+
+            modelBuilder.Entity("TsebeCareerPrep.Api.Models.InterviewQuestionRubric", b =>
+                {
+                    b.HasOne("TsebeCareerPrep.Api.Models.InterviewQuestion", "InterviewQuestion")
+                        .WithOne()
+                        .HasForeignKey("TsebeCareerPrep.Api.Models.InterviewQuestionRubric", "InterviewQuestionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("InterviewQuestion");
                 });
 
             modelBuilder.Entity("TsebeCareerPrep.Api.Models.InterviewResponse", b =>

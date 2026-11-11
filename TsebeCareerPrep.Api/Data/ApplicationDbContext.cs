@@ -26,6 +26,11 @@ namespace TsebeCareerPrep.Api.Data
         public DbSet<InterviewResponse> InterviewResponses
             => Set<InterviewResponse>();
 
+        public DbSet<InterviewAssessment> InterviewAssessments
+            => Set<InterviewAssessment>();
+        public DbSet<InterviewQuestionRubric> InterviewQuestionRubrics
+            => Set<InterviewQuestionRubric>();
+
         protected override void OnModelCreating(
             ModelBuilder modelBuilder)
         {
@@ -67,6 +72,26 @@ namespace TsebeCareerPrep.Api.Data
                 .WithMany()
                 .HasForeignKey(r => r.InterviewQuestionId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // InterviewResponse -> InterviewAssessment
+            // Each submitted answer can have one assessment.
+            modelBuilder.Entity<InterviewAssessment>()
+                .HasOne(a => a.InterviewResponse)
+                .WithOne()
+                .HasForeignKey<InterviewAssessment>(
+                    a => a.InterviewResponseId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+
+            // InterviewQuestion -> InterviewQuestionRubric
+            // Each interview question can have one marking rubric.
+            modelBuilder.Entity<InterviewQuestionRubric>()
+                .HasOne(r => r.InterviewQuestion)
+                .WithOne()
+                .HasForeignKey<InterviewQuestionRubric>(
+                    r => r.InterviewQuestionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
         }
     }
 }

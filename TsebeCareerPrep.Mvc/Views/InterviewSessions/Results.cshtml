@@ -1,176 +1,401 @@
-﻿@model TsebeCareerPrep.Mvc.Models.InterviewResultsViewModel
+@model TsebeCareerPrep.Mvc.Models.InterviewResultsViewModel
 
 @{
     ViewData["Title"] = "Interview Results";
+
+    var isCompleted = Model.Session.Status == "Completed";
+    var totalQuestions = Model.TotalQuestions;
+    var answeredQuestions = Model.TotalAnswered;
+    var skippedQuestions = Model.TotalSkipped;
 }
 
-<div class="container mt-4 mb-5">
+<section class="interview-results-page">
 
-    <div class="mb-4">
+    <!-- =====================================
+         RESULTS HEADER
+         ===================================== -->
+    <div class="interview-results-header">
+
         <a asp-controller="InterviewSessions"
            asp-action="Details"
            asp-route-id="@Model.Session.Id"
-           class="btn btn-outline-secondary mb-3">
+           class="interview-back-link">
+            <span aria-hidden="true">&#8592;</span>
             Back to Interview Session
         </a>
 
-        <h1 class="fw-bold">Interview Results</h1>
-
-        <p class="text-muted">
-            Review your submitted answers and compare them
-            with the suggested answers.
+        <p class="interview-results-eyebrow">
+            INTERVIEW PRACTICE
         </p>
+
+        <h1>Interview Results</h1>
+
+        <p class="interview-results-introduction">
+            Review your responses, compare them with
+            suggested answers and identify opportunities
+            to strengthen your interview skills.
+        </p>
+
+        <div class="interview-results-header-summary">
+            <span class="interview-results-category">
+                @Model.Session.CategoryName
+            </span>
+
+            <span class="interview-results-status
+                @(isCompleted ? "completed" : "in-progress")">
+                @Model.Session.Status
+            </span>
+        </div>
     </div>
 
-    <div class="card shadow-sm mb-4">
+    <!-- =====================================
+         SESSION SUMMARY
+         ===================================== -->
+    <div class="interview-results-content">
 
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">
-                @Model.Session.CategoryName
-            </h5>
-        </div>
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success" role="status">
+                @TempData["Success"]
+            </div>
+        }
 
-        <div class="card-body">
+        <div class="interview-results-summary">
+
+            <h2>Interview Summary</h2>
 
             <div class="row g-3">
 
-                <div class="col-md-4">
-                    <strong>Session ID</strong>
-                    <p class="mb-0">@Model.Session.Id</p>
-                </div>
-
-                <div class="col-md-4">
-                    <strong>Status</strong>
-                    <p class="mb-0">
-                        <span class="badge bg-success">
-                            @Model.Session.Status
+                <div class="col-6 col-md-4">
+                    <div class="interview-results-stat">
+                        <span class="interview-results-stat-label">
+                            Total Questions
                         </span>
-                    </p>
+                        <strong>@totalQuestions</strong>
+                    </div>
                 </div>
 
-                <div class="col-md-4">
-                    <strong>Questions Answered</strong>
-                    <p class="mb-0">
-                        @Model.TotalAnswered
-                    </p>
+
+                <div class="col-6 col-md-4">
+                    <div class="interview-results-stat">
+                        <span class="interview-results-stat-label">
+                            Questions Answered
+                        </span>
+
+                        <strong>
+                            @answeredQuestions of @totalQuestions
+                        </strong>
+                    </div>
                 </div>
 
-                <div class="col-md-6">
-                    <strong>Started At (UTC)</strong>
-                    <p class="mb-0">
-                        @Model.Session.StartedAt.ToString(
-                            "dd MMM yyyy HH:mm")
-                    </p>
+
+                <div class="col-6 col-md-4">
+                    <div class="interview-results-stat">
+                        <span class="interview-results-stat-label">
+                            Questions Skipped
+                        </span>
+                        <strong>@skippedQuestions</strong>
+                    </div>
                 </div>
 
-                <div class="col-md-6">
-                    <strong>Completed At (UTC)</strong>
-                    <p class="mb-0">
-                        @(Model.Session.CompletedAt?.ToString(
-                            "dd MMM yyyy HH:mm") ?? "Not available")
-                    </p>
+                <div class="col-6 col-md-4">
+                    <div class="interview-results-stat">
+                        <span class="interview-results-stat-label">
+                            Session ID
+                        </span>
+                        <strong>#@Model.Session.Id</strong>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-4">
+                    <div class="interview-results-stat">
+                        <span class="interview-results-stat-label">
+                            Status
+                        </span>
+                        <strong>@Model.Session.Status</strong>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="interview-results-stat">
+                        <span class="interview-results-stat-label">
+                            Started At (UTC)
+                        </span>
+                        <strong>
+                            @Model.Session.StartedAt.ToString(
+                                "dd MMM yyyy HH:mm")
+                        </strong>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="interview-results-stat">
+                        <span class="interview-results-stat-label">
+                            Completed At (UTC)
+                        </span>
+                        <strong>
+                            @(Model.Session.CompletedAt?.ToString(
+                                "dd MMM yyyy HH:mm") ?? "Not available")
+                        </strong>
+                    </div>
                 </div>
 
             </div>
-
         </div>
-    </div>
 
-    <h2 class="h4 fw-bold mb-3">Your Answers</h2>
+        <!-- =====================================
+             QUESTION-BY-QUESTION REVIEW
+             ===================================== -->
+        <div class="interview-results-section-heading">
 
-    @if (Model.Responses == null || !Model.Responses.Any())
-    {
-        <div class="alert alert-info">
-            No submitted answers were found for this interview.
+            <h2>Question-by-Question Review</h2>
+
+            <p>
+                Review all interview questions, including
+                those you skipped during your session.
+            </p>
         </div>
-    }
-    else
-    {
-        @foreach (var response in Model.Responses)
+
+        @if (Model.Questions == null || !Model.Questions.Any())
         {
-            <div class="card shadow-sm mb-4">
+            <div class="alert alert-info" role="status">
+                No interview questions were found for this session.
+            </div>
+        }
+        else
+        {
+            @foreach (var question in Model.Questions)
+            {
+                <article class="interview-result-question-card">
 
-                <div class="card-header bg-light">
+                    <div class="interview-result-question-top">
 
-                    <div class="d-flex flex-wrap
-                        justify-content-between
-                        align-items-center gap-2">
+                        <span class="interview-result-question-number">
+                            Question @question.QuestionNumber
+                            of @totalQuestions
+                        </span>
 
-                        <h5 class="mb-0">
-                            Question @response.InterviewQuestionId
-                        </h5>
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
 
-                        @if (!string.IsNullOrWhiteSpace(
-                            response.DifficultyLevel))
+                            @if (!string.IsNullOrWhiteSpace(
+                                question.DifficultyLevel))
+                            {
+                                <span class="interview-result-difficulty">
+                                    @question.DifficultyLevel
+                                </span>
+                            }
+
+                            @if (question.IsAnswered)
+                            {
+                                <span class="badge bg-success">
+                                    Answered
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">
+                                    Skipped
+                                </span>
+                            }
+
+                        </div>
+                    </div>
+
+                    <h3 class="interview-result-question-text">
+                        @question.QuestionText
+                    </h3>
+
+                    <!-- USER ANSWER -->
+                    <div class="interview-result-answer-block">
+
+                        <h4 class="interview-result-user-answer-title">
+                            Your Answer
+                        </h4>
+
+                        @if (question.IsAnswered)
                         {
-                            <span class="badge bg-secondary">
-                                @response.DifficultyLevel
-                            </span>
+                            <div class="interview-result-answer-text user-answer">
+                                @question.AnswerText
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning mb-0"
+                                 role="status">
+                                You skipped this question.
+                                No answer was submitted.
+                            </div>
                         }
 
                     </div>
 
-                </div>
+                    <!-- SUGGESTED ANSWER -->
+                    <div class="interview-result-answer-block">
 
-                <div class="card-body">
-
-                    <h6 class="fw-bold">
-                        @response.QuestionText
-                    </h6>
-
-                    <div class="mt-4">
-
-                        <h6 class="text-primary fw-bold">
-                            Your Answer
-                        </h6>
-
-                        <div class="border rounded p-3 bg-light"
-                             style="white-space: pre-wrap;">
-                            @response.AnswerText
-                        </div>
-
-                    </div>
-
-                    <div class="mt-4">
-
-                        <h6 class="text-success fw-bold">
+                        <h4 class="interview-result-suggested-title">
                             Suggested Answer
-                        </h6>
+                        </h4>
 
-                        <div class="border rounded p-3"
-                             style="white-space: pre-wrap;">
-                            @response.SuggestedAnswer
-                        </div>
+                        @if (!string.IsNullOrWhiteSpace(
+                            question.SuggestedAnswer))
+                        {
+                            <div class="interview-result-answer-text suggested-answer">
+                                @question.SuggestedAnswer
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-0">
+                                No suggested answer is available
+                                for this question.
+                            </p>
+                        }
 
                     </div>
 
-                    <p class="text-muted small mt-3 mb-0">
-                        Submitted:
-                        @response.SubmittedAt.ToString(
-                            "dd MMM yyyy HH:mm") UTC
-                    </p>
+                    <!-- ASSESSMENT FEEDBACK -->
+                    @if (question.IsAnswered)
+                    {
+                        <div class="interview-result-answer-block">
+                            <h4 class="interview-result-suggested-title">
+                                Assessment Feedback
+                            </h4>
 
-                </div>
+                            @if (question.AssessmentFeedback != null)
+                            {
+                                var feedback = question.AssessmentFeedback;
 
-            </div>
+                                <p class="text-muted mb-3">
+                                    <strong>Status:</strong> @feedback.AssessmentStatus
+                                </p>
+
+                                <h5 class="fs-6">Detected Concepts</h5>
+                                @if (feedback.DetectedConcepts.Any())
+                                {
+                                    <ul>
+                                        @foreach (var concept in feedback.DetectedConcepts)
+                                        {
+                                            <li>@concept</li>
+                                        }
+                                    </ul>
+                                }
+                                else
+                                {
+                                    <p class="text-muted">No expected phrases were detected.</p>
+                                }
+
+                                <h5 class="fs-6">Concepts to Review</h5>
+                                @if (feedback.ConceptsToReview.Any())
+                                {
+                                    <ul>
+                                        @foreach (var concept in feedback.ConceptsToReview)
+                                        {
+                                            <li>@concept</li>
+                                        }
+                                    </ul>
+                                }
+                                else
+                                {
+                                    <p class="text-muted">All listed expected phrases were detected.</p>
+                                }
+
+                                @if (!string.IsNullOrWhiteSpace(feedback.ImprovementGuidance))
+                                {
+                                    <h5 class="fs-6">Improvement Guidance</h5>
+                                    <p>@feedback.ImprovementGuidance</p>
+                                }
+
+                                @if (feedback.RequiresManualReview)
+                                {
+                                    <p class="text-muted small mb-0">
+                                        @feedback.ReviewReason
+                                        Phrase detection does not verify correctness or understanding.
+                                    </p>
+                                }
+                            }
+                            else
+                            {
+                                <p class="text-muted mb-0">
+                                    Assessment feedback is not available for this answer.
+                                </p>
+                            }
+                        </div>
+                    }
+
+                    <!-- SUBMISSION DATE -->
+                    @if (question.SubmittedAt.HasValue)
+                    {
+                        <p class="interview-result-submitted-date">
+                            Submitted:
+                            @question.SubmittedAt.Value.ToString(
+                                "dd MMM yyyy HH:mm") UTC
+                        </p>
+                    }
+
+                </article>
+            }
         }
-    }
 
-    <div class="d-flex flex-wrap gap-2 mt-4">
+        <!-- =====================================
+             NEXT ACTIONS
+             ===================================== -->
 
-        <a asp-controller="InterviewCategories"
-           asp-action="Index"
-           class="btn btn-primary">
-            Start Another Interview
-        </a>
+        <div class="interview-results-actions">
 
-        <a asp-controller="InterviewSessions"
-           asp-action="Details"
-           asp-route-id="@Model.Session.Id"
-           class="btn btn-outline-secondary">
-            Back to Session
-        </a>
+            @if (isCompleted && skippedQuestions > 0)
+            {
+                <form asp-controller="InterviewSessions"
+                      asp-action="Reopen"
+                      asp-route-id="@Model.Session.Id"
+                      method="post"
+                      onsubmit="return confirm('You have @skippedQuestions unanswered question(s). Reopen this interview to finish them? Your existing answers will be preserved.');">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit"
+                            class="btn btn-success interview-results-primary-button">
+                        Resume Skipped Questions
+                    </button>
+                </form>
+            }
+
+            <a asp-controller="InterviewCategories"
+               asp-action="Index"
+               class="btn btn-primary interview-results-primary-button">
+                Start Another Interview
+            </a>
+
+            <a asp-controller="InterviewSessions"
+               asp-action="Details"
+               asp-route-id="@Model.Session.Id"
+               class="btn btn-outline-secondary interview-results-secondary-button">
+                Back to Session
+            </a>
+
+
+        </div>
+
+
+        <!-- =====================================
+             PREPARATION REMINDER
+             ===================================== -->
+        <aside class="interview-results-tip">
+
+            <span aria-hidden="true">💡</span>
+
+            <div>
+                <h2>Keep Improving</h2>
+
+                <p>
+                    Interview preparation is a continuous
+                    process. Review your answers, identify
+                    areas for improvement and practise
+                    regularly to build confidence.
+                </p>
+            </div>
+
+        </aside>
 
     </div>
 
-</div>
+</section>

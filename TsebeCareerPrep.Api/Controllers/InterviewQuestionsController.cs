@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TsebeCareerPrep.Api.Data;
-using TsebeCareerPrep.Api.Models;
 
 namespace TsebeCareerPrep.Api.Controllers
 {
@@ -20,13 +19,19 @@ namespace TsebeCareerPrep.Api.Controllers
 
         // GET: api/InterviewQuestions
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<InterviewQuestion>>>
-            GetQuestions()
+        public async Task<IActionResult> GetQuestions()
         {
             var questions = await _context.InterviewQuestions
                 .AsNoTracking()
                 .Where(q => q.IsActive)
                 .OrderBy(q => q.Id)
+                .Select(q => new
+                {
+                    q.Id,
+                    q.InterviewCategoryId,
+                    q.QuestionText,
+                    q.DifficultyLevel
+                })
                 .ToListAsync();
 
             return Ok(questions);
@@ -34,13 +39,19 @@ namespace TsebeCareerPrep.Api.Controllers
 
         // GET: api/InterviewQuestions/5
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<InterviewQuestion>>
-            GetQuestion(int id)
+        public async Task<IActionResult> GetQuestion(int id)
         {
             var question = await _context.InterviewQuestions
                 .AsNoTracking()
-                .FirstOrDefaultAsync(q =>
-                    q.Id == id && q.IsActive);
+                .Where(q => q.Id == id && q.IsActive)
+                .Select(q => new
+                {
+                    q.Id,
+                    q.InterviewCategoryId,
+                    q.QuestionText,
+                    q.DifficultyLevel
+                })
+                .FirstOrDefaultAsync();
 
             if (question == null)
                 return NotFound();
@@ -50,8 +61,8 @@ namespace TsebeCareerPrep.Api.Controllers
 
         // GET: api/InterviewQuestions/category/1
         [HttpGet("category/{categoryId:int}")]
-        public async Task<ActionResult<IEnumerable<InterviewQuestion>>>
-            GetQuestionsByCategory(int categoryId)
+        public async Task<IActionResult> GetQuestionsByCategory(
+            int categoryId)
         {
             var categoryExists = await _context.InterviewCategories
                 .AnyAsync(c => c.Id == categoryId && c.IsActive);
@@ -61,9 +72,17 @@ namespace TsebeCareerPrep.Api.Controllers
 
             var questions = await _context.InterviewQuestions
                 .AsNoTracking()
-                .Where(q => q.InterviewCategoryId == categoryId
-                         && q.IsActive)
+                .Where(q =>
+                    q.InterviewCategoryId == categoryId &&
+                    q.IsActive)
                 .OrderBy(q => q.Id)
+                .Select(q => new
+                {
+                    q.Id,
+                    q.InterviewCategoryId,
+                    q.QuestionText,
+                    q.DifficultyLevel
+                })
                 .ToListAsync();
 
             return Ok(questions);

@@ -1,145 +1,452 @@
-﻿@model TsebeCareerPrep.Mvc.Models.InterviewSessionQuestionsViewModel
+@model TsebeCareerPrep.Mvc.Models.InterviewSessionQuestionsViewModel
 
 @{
     ViewData["Title"] = "Interview Questions";
+
+    var questions = Model.Questions?.ToList()
+        ?? new List<TsebeCareerPrep.Mvc.Models.InterviewSessionQuestionViewModel>();
+
+    var totalQuestions = questions.Count;
+    var answeredQuestions = questions.Count(q => q.IsAnswered);
+
+    var progressPercentage = totalQuestions > 0
+        ? (int)Math.Round(answeredQuestions * 100.0 / totalQuestions)
+        : 0;
+
+    var isInProgress = Model.Status == "InProgress";
 }
 
-<div class="container mt-4 mb-5">
+<section class="interview-questions-page">
 
-    <div class="mb-4">
+    <!-- INTERVIEW HEADER -->
+
+    <div class="interview-questions-header">
+
         <a asp-controller="InterviewSessions"
            asp-action="Details"
            asp-route-id="@Model.SessionId"
-           class="btn btn-outline-secondary mb-3">
-            Back to Interview Session
+           class="interview-back-link">
+            &#8592; Back to Interview Session
         </a>
 
-        <h1 class="fw-bold">@Model.CategoryName Interview</h1>
-
-        <p class="text-muted">
-            Session #@Model.SessionId
-            — Select a question to answer.
+        <p class="interview-questions-eyebrow">
+            INTERVIEW PRACTICE
         </p>
 
-        @if (Model.Status == "InProgress")
-        {
-            <span class="badge bg-warning text-dark">
-                In Progress
+        <h1>@Model.CategoryName Interview</h1>
+
+        <p class="interview-session-reference">
+            Session #@Model.SessionId
+        </p>
+
+        <div class="interview-header-status">
+            <span class="interview-status-pill @(isInProgress ? "in-progress" : "completed")">
+                @(isInProgress ? "In Progress" : Model.Status)
             </span>
+        </div>
+
+        <div class="interview-progress-summary">
+
+            <div class="interview-progress-labels">
+                <span>Interview Progress</span>
+                <span>@answeredQuestions of @totalQuestions answered</span>
+            </div>
+
+            <div class="interview-progress-track"
+                 role="progressbar"
+                 aria-label="Interview questions answered"
+                 aria-valuenow="@answeredQuestions"
+                 aria-valuemin="0"
+                 aria-valuemax="@totalQuestions">
+
+                <div class="interview-progress-fill"
+                     style="width: @(progressPercentage)%;">
+                </div>
+
+            </div>
+
+            <p class="interview-progress-percentage">
+                @progressPercentage% complete
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- QUESTION CONTENT -->
+
+    <div class="interview-questions-content">
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success" role="status">
+                @TempData["Success"]
+            </div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                @TempData["Error"]
+            </div>
+        }
+
+        @if (totalQuestions == 0)
+        {
+            <div class="alert alert-info" role="status">
+                No interview questions are currently available.
+            </div>
         }
         else
         {
-            <span class="badge bg-success">
-                @Model.Status
-            </span>
-        }
-    </div>
+            <div class="interview-question-navigator">
 
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success">
-            @TempData["Success"]
-        </div>
-    }
+                <div class="d-flex justify-content-between
+                    align-items-center gap-2 mb-3">
 
-    @if (Model.Questions == null || !Model.Questions.Any())
-    {
-        <div class="alert alert-info">
-            No interview questions are currently available
-            for this category.
-        </div>
-    }
-    else
-    {
-        <div class="row g-3">
+                    <h2 class="h5 fw-bold mb-0"
+                        id="currentQuestionNumber">
+                        Question 1 of @totalQuestions
+                    </h2>
 
-            @foreach (var question in Model.Questions)
-            {
-                <div class="col-md-6">
+                    <span class="badge bg-primary">
+                        @totalQuestions Questions
+                    </span>
 
-                    <div class="card shadow-sm h-100">
+                </div>
 
-                        <div class="card-body d-flex flex-column">
+                @for (var i = 0; i < totalQuestions; i++)
+                {
+                    var question = questions[i];
 
-                            <div class="mb-3">
 
-                                <span class="badge bg-secondary">
-                                    Question @question.Id
+                    <article class="interview-question-card"
+                             data-question-index="@i"
+                             data-question-id="@question.Id"
+                             data-answered="@question.IsAnswered.ToString().ToLowerInvariant()"
+                             hidden="@(i != 0 ? "hidden" : null)">
+
+
+                        <div class="interview-question-card-top">
+
+                            <span class="interview-question-number">
+                                Question @(i + 1)
+                            </span>
+
+                            @if (!string.IsNullOrWhiteSpace(
+                                question.DifficultyLevel))
+                            {
+                                <span class="interview-question-difficulty">
+                                    @question.DifficultyLevel
                                 </span>
-
-                                @if (!string.IsNullOrWhiteSpace(
-                                    question.DifficultyLevel))
-                                {
-                                    <span class="badge bg-info text-dark">
-                                        @question.DifficultyLevel
-                                    </span>
-                                }
-
-                            </div>
-
-                            <h5 class="card-title">
-                                @question.QuestionText
-                            </h5>
-
-                            <div class="mt-auto pt-3">
-
-                                
-                                @if (question.IsAnswered)
-                                {
-                                    <div class="mb-2">
-                                        <span class="badge bg-success">
-                                            &#10003; Answered
-                                        </span>
-                                    </div>
-
-                                    <button type="button"
-                                            class="btn btn-outline-success"
-                                            disabled>
-                                        Already Answered
-                                    </button>
-                                }
-                                else if (Model.Status == "InProgress")
-                                {
-                                    <span class="badge bg-warning text-dark mb-2">
-                                        Not Answered
-                                    </span>
-
-                                    <div>
-                                        <a asp-controller="InterviewSessions"
-                                           asp-action="Answer"
-                                           asp-route-sessionId="@Model.SessionId"
-                                           asp-route-questionId="@question.Id"
-                                           class="btn btn-primary">
-                                            Answer Question
-                                        </a>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary mb-2">
-                                        Not Answered
-                                    </span>
-
-                                    <div>
-                                        <button type="button"
-                                                class="btn btn-secondary"
-                                                disabled>
-                                            Session Completed
-                                        </button>
-                                    </div>
-                                }
-
-
-                            </div>
+                            }
 
                         </div>
 
+                        <h3 class="interview-question-text">
+                            @question.QuestionText
+                        </h3>
+
+                        <div class="interview-question-card-footer">
+
+                            @if (question.IsAnswered)
+                            {
+                                <span class="interview-question-state answered">
+                                    &#10003; Answered
+                                </span>
+
+                                <button type="button"
+                                        class="btn btn-outline-success"
+                                        disabled>
+                                    Already Answered
+                                </button>
+                            }
+                            else if (isInProgress)
+                            {
+                                <span class="interview-question-state pending">
+                                    Not Answered
+                                </span>
+
+                                <a asp-controller="InterviewSessions"
+                                   asp-action="Answer"
+                                   asp-route-sessionId="@Model.SessionId"
+                                   asp-route-questionId="@question.Id"
+                                   class="btn btn-primary interview-question-button">
+
+                                    Answer Question
+
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="interview-question-state unavailable">
+                                    Not Answered
+                                </span>
+
+                                <button type="button"
+                                        class="btn btn-secondary"
+                                        disabled>
+                                    Session Completed
+                                </button>
+                            }
+
+                        </div>
+
+                    </article>
+                }
+
+
+                @if (isInProgress)
+                {
+                    <div class="mt-4 pt-3 border-top">
+
+                        <div class="d-flex flex-wrap
+                            justify-content-between
+                            align-items-center gap-3">
+
+                            <div>
+                                <h3 class="h5 fw-bold mb-1">
+                                    Ready to finish?
+                                </h3>
+
+                                <p class="text-muted mb-0">
+                                    You have answered
+                                    <strong>@answeredQuestions of @totalQuestions</strong>
+                                    questions.
+                                </p>
+                            </div>
+
+                            <form asp-controller="InterviewSessions"
+                                  asp-action="Complete"
+                                  asp-route-id="@Model.SessionId"
+                                  method="post"
+                                  onsubmit="return confirm('You answered @answeredQuestions of @totalQuestions questions. @((totalQuestions - answeredQuestions)) question(s) remain unanswered. Are you sure you want to complete this interview? You cannot submit additional answers afterwards.');">
+
+                                @Html.AntiForgeryToken()
+
+                                <button type="submit"
+                                        class="btn btn-success"
+                                        disabled="@(answeredQuestions == 0)">
+                                    Complete Interview
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                        @if (answeredQuestions == 0)
+                        {
+                            <p class="text-muted small mt-2">
+                                Submit at least one answer before completing
+                                this interview.
+                            </p>
+                        }
+
                     </div>
+                }
+
+
+                <!-- QUESTION NAVIGATION -->
+
+                <div class="d-flex justify-content-between
+                    align-items-center flex-wrap gap-3 mt-4">
+
+                    <button type="button"
+                            id="previousQuestionButton"
+                            class="btn btn-outline-secondary"
+                            disabled>
+                        &#8592; Previous
+                    </button>
+
+                    <button type="button"
+                            id="nextQuestionButton"
+                            class="btn btn-primary">
+                        Next / Skip &#8594;
+                    </button>
 
                 </div>
+
+                <p class="text-muted small mt-3"
+                   id="questionNavigationHint"
+                   aria-live="polite">
+                    You can skip a question and return to it later.
+                </p>
+
+            </div>
+        }
+
+    </div>
+
+</section>
+
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const cards = Array.from(
+                document.querySelectorAll(
+                    ".interview-question-navigator [data-question-index]"
+                )
+            );
+
+            if (cards.length === 0) {
+                return;
             }
 
-        </div>
-    }
+            const previousButton = document.getElementById(
+                "previousQuestionButton"
+            );
 
-</div>
+            const nextButton = document.getElementById(
+                "nextQuestionButton"
+            );
+
+            const questionNumber = document.getElementById(
+                "currentQuestionNumber"
+            );
+
+            const hint = document.getElementById(
+                "questionNavigationHint"
+            );
+
+            const parameters = new URLSearchParams(
+                window.location.search
+            );
+
+            const requestedQuestion = Number.parseInt(
+                parameters.get("question") || "1",
+                10
+            );
+
+            const answeredQuestionId = Number.parseInt(
+                parameters.get("answeredQuestionId") || "0",
+                10
+            );
+
+            let currentIndex = 0;
+
+            // Priority 1: Continue after a submitted answer.
+            if (answeredQuestionId > 0) {
+
+                const answeredIndex = cards.findIndex(
+                    card => Number(card.dataset.questionId)
+                        === answeredQuestionId
+                );
+
+                if (answeredIndex >= 0) {
+
+                    // Find the next unanswered question,
+                    // starting after the question just submitted.
+                    let nextUnansweredIndex = -1;
+
+                    for (let i = answeredIndex + 1;
+                        i < cards.length; i++) {
+
+                        if (cards[i].dataset.answered === "false") {
+                            nextUnansweredIndex = i;
+                            break;
+                        }
+                    }
+
+                    // If necessary, search earlier questions
+                    // that the user skipped.
+                    if (nextUnansweredIndex === -1) {
+
+                        for (let i = 0;
+                            i < answeredIndex; i++) {
+
+                            if (cards[i].dataset.answered === "false") {
+                                nextUnansweredIndex = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    currentIndex = nextUnansweredIndex >= 0
+                        ? nextUnansweredIndex
+                        : answeredIndex;
+                }
+            }
+
+            // Priority 2: Respect manual question navigation.
+else if (parameters.has("question")
+    && Number.isFinite(requestedQuestion)) {
+
+    currentIndex = Math.min(
+        Math.max(requestedQuestion - 1, 0),
+        cards.length - 1
+    );
+}
+
+// Priority 3: Resume at the first unanswered question.
+else {
+
+    const firstUnansweredIndex = cards.findIndex(
+        card => card.dataset.answered === "false"
+    );
+
+    currentIndex = firstUnansweredIndex >= 0
+        ? firstUnansweredIndex
+        : 0;
+}
+
+
+            function showQuestion(index) {
+
+                currentIndex = Math.min(
+                    Math.max(index, 0),
+                    cards.length - 1
+                );
+
+                cards.forEach(function (card, position) {
+                    card.hidden = position !== currentIndex;
+                });
+
+                questionNumber.textContent =
+                    `Question ${currentIndex + 1} of ${cards.length}`;
+
+                previousButton.disabled = currentIndex === 0;
+
+                nextButton.disabled =
+                    currentIndex === cards.length - 1;
+
+                nextButton.textContent =
+                    currentIndex === cards.length - 1
+                        ? "Last Question"
+                        : "Next / Skip →";
+
+                hint.textContent =
+                    currentIndex === cards.length - 1
+                        ? "You have reached the last question. You can return to earlier questions."
+                        : "You can skip a question and return to it later.";
+
+                const url = new URL(window.location.href);
+
+                url.searchParams.delete("answeredQuestionId");
+
+                url.searchParams.set(
+                    "question",
+                    String(currentIndex + 1)
+                );
+
+                window.history.replaceState(
+                    null,
+                    "",
+                    url.pathname + url.search + url.hash
+                );
+            }
+
+            previousButton.addEventListener("click", function () {
+                showQuestion(currentIndex - 1);
+            });
+
+            nextButton.addEventListener("click", function () {
+                showQuestion(currentIndex + 1);
+            });
+
+            showQuestion(currentIndex);
+
+        });
+    </script>
+}

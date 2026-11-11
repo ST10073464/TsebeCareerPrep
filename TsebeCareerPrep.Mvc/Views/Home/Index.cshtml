@@ -1,8 +1,458 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Prepare for Your Career";
+
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!-- =========================================
+     DESKTOP HERO
+     Existing design preserved
+     ========================================= -->
+
+<section class="career-hero desktop-home-hero">
+    <div class="container">
+        <div class="career-hero-content">
+
+            <p class="hero-eyebrow mb-3">
+                Your career journey starts here
+            </p>
+
+            <h1 class="mb-4">
+                Prepare with Confidence.
+                <span class="hero-highlight d-block">
+                    Advance Your Career.
+                </span>
+            </h1>
+
+            <p class="lead mb-4">
+                Every career opportunity begins with preparation.
+                Tsebe CareerPrep helps you build interview
+                confidence, improve your communication skills,
+                and practise presenting your knowledge and
+                experience professionally.
+            </p>
+
+            <p class="mb-4">
+                Whether you are preparing for your first job,
+                entering a new industry, or pursuing career
+                advancement, developing your interview skills
+                can help you approach opportunities with
+                greater confidence.
+            </p>
+
+            <div class="hero-actions d-flex flex-wrap gap-3">
+
+                <a asp-controller="InterviewCategories"
+                   asp-action="Index"
+                   class="btn btn-primary btn-lg px-4">
+                    Start Practising
+                </a>
+
+                @if (!isAuthenticated)
+                {
+                    <a asp-controller="Account"
+                       asp-action="Login"
+                       class="btn btn-light btn-lg px-4">
+                        Log In
+                    </a>
+                }
+                else
+                {
+                    <a asp-controller="InterviewSessions"
+                       asp-action="History"
+                       class="btn btn-light btn-lg px-4">
+                        My Interview History
+                    </a>
+                }
+
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- =========================================
+     MOBILE APP-STYLE HOMEPAGE
+     ========================================= -->
+
+<section class="mobile-home">
+
+    <!-- Mobile welcome panel -->
+
+    <div class="mobile-welcome">
+
+        <p class="mobile-welcome-eyebrow">
+            YOUR CAREER JOURNEY
+        </p>
+
+        <h1>
+            Prepare with
+            <span>Confidence.</span>
+        </h1>
+
+        <p class="mobile-welcome-highlight">
+            Advance Your Career.
+        </p>
+
+        <p class="mobile-welcome-description">
+            Build your interview skills, strengthen your
+            confidence and prepare for your next
+            career opportunity.
+        </p>
+
+        <a asp-controller="InterviewCategories"
+           asp-action="Index"
+           class="btn btn-primary mobile-start-button">
+            Start Practising
+        </a>
+
+        @if (!isAuthenticated)
+        {
+            <p class="mobile-login-prompt">
+                Already have an account?
+                <a asp-controller="Account"
+                   asp-action="Login">
+                    Log In
+                </a>
+            </p>
+        }
+
+    </div>
+
+
+    <!-- Mobile quick-access section -->
+
+    <div class="mobile-home-content">
+
+        <div class="mobile-section-heading">
+            <h2>Explore CareerPrep</h2>
+            <p>
+                Everything you need to begin preparing.
+            </p>
+        </div>
+
+        <div class="mobile-quick-grid">
+
+            <a asp-controller="InterviewCategories"
+               asp-action="Index"
+               class="mobile-quick-card">
+
+                <span class="mobile-quick-icon"
+                      aria-hidden="true">
+                    💼
+                </span>
+
+                <span class="mobile-quick-title">
+                    Interview Practice
+                </span>
+
+                <span class="mobile-quick-description">
+                    Explore questions
+                </span>
+            </a>
+
+            <a asp-controller="@(isAuthenticated ? "InterviewSessions" : "Account")"
+               asp-action="@(isAuthenticated ? "History" : "Login")"
+               class="mobile-quick-card">
+
+                <span class="mobile-quick-icon"
+                      aria-hidden="true">
+                    📋
+                </span>
+
+                <span class="mobile-quick-title">
+                    My Interviews
+                </span>
+
+                <span class="mobile-quick-description">
+                    Review your sessions
+                </span>
+            </a>
+
+            <a asp-controller="@(isAuthenticated ? "InterviewSessions" : "Account")"
+               asp-action="@(isAuthenticated ? "Progress" : "Login")"
+               class="mobile-quick-card">
+
+                <span class="mobile-quick-icon"
+                      aria-hidden="true">
+                    📈
+                </span>
+
+                <span class="mobile-quick-title">
+                    My Progress
+                </span>
+
+                <span class="mobile-quick-description">
+                    Track your growth
+                </span>
+            </a>
+
+            <a asp-controller="@(isAuthenticated ? "InterviewSessions" : "Account")"
+               asp-action="@(isAuthenticated ? "History" : "Login")"
+               class="mobile-quick-card">
+
+                <span class="mobile-quick-icon"
+                      aria-hidden="true">
+                    👤
+                </span>
+
+                <span class="mobile-quick-title">
+                    @(isAuthenticated ? "My Activity" : "My Account")
+                </span>
+
+                <span class="mobile-quick-description">
+                    @(isAuthenticated ? "View interview history" : "Log in to continue")
+                </span>
+            </a>
+
+        </div>
+
+
+        <!-- Mobile encouragement -->
+
+        <div class="mobile-encouragement">
+
+            <h2>
+                Small Steps. Stronger Confidence.
+            </h2>
+
+            <p>
+                Every practice session brings you closer
+                to presenting your skills and experience
+                with confidence.
+            </p>
+
+            <a asp-controller="InterviewCategories"
+               asp-action="Index">
+                Explore interview categories
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================
+     WHY INTERVIEW PREPARATION MATTERS
+     ========================================= -->
+
+<section class="container py-5 home-benefits desktop-home-content">
+
+    <div class="text-center mb-5">
+
+        <h2 class="fw-bold">
+            Why Interview Preparation Matters
+        </h2>
+
+        <p class="text-secondary lead">
+            Strong preparation helps you communicate your
+            potential when career opportunities arise.
+        </p>
+
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+
+                    <div class="fs-2 mb-3" aria-hidden="true">
+                        💼
+                    </div>
+
+                    <h3 class="h5 fw-bold">
+                        Career Readiness
+                    </h3>
+
+                    <p class="text-secondary mb-0">
+                        Prepare to approach job interviews with
+                        confidence. Develop a clearer understanding
+                        of your strengths, experience and career
+                        goals so you can communicate your potential
+                        more effectively.
+                    </p>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+
+                    <div class="fs-2 mb-3" aria-hidden="true">
+                        👥
+                    </div>
+
+                    <h3 class="h5 fw-bold">
+                        Practical Interview Experience
+                    </h3>
+
+                    <p class="text-secondary mb-0">
+                        Build familiarity with interview questions
+                        through regular practice. Learn to organise
+                        your thoughts and express your knowledge,
+                        skills and experience more clearly.
+                    </p>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+
+                    <div class="fs-2 mb-3" aria-hidden="true">
+                        📈
+                    </div>
+
+                    <h3 class="h5 fw-bold">
+                        Continuous Improvement
+                    </h3>
+
+                    <p class="text-secondary mb-0">
+                        Every practice session is an opportunity
+                        to grow. Review your previous interviews,
+                        reflect on your responses and monitor
+                        your preparation progress over time.
+                    </p>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+
+<!-- =========================================
+     HOW TSEBE CAREERPREP WORKS
+     ========================================= -->
+
+<section class="py-5 bg-light home-steps desktop-home-content">
+
+    <div class="container">
+
+        <div class="text-center mb-5">
+
+            <h2 class="fw-bold">
+                How Tsebe CareerPrep Works
+            </h2>
+
+            <p class="text-secondary lead">
+                Begin your interview preparation in
+                three simple steps.
+            </p>
+
+        </div>
+
+        <div class="row g-4 text-center">
+
+            <div class="col-md-4">
+                <div class="p-4 h-100">
+
+                    <div class="fs-1 fw-bold text-primary mb-3">
+                        01
+                    </div>
+
+                    <h3 class="h5 fw-bold">
+                        Choose a Category
+                    </h3>
+
+                    <p class="text-secondary">
+                        Explore available interview categories
+                        and select the area you would like
+                        to practise.
+                    </p>
+
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="p-4 h-100">
+
+                    <div class="fs-1 fw-bold text-primary mb-3">
+                        02
+                    </div>
+
+                    <h3 class="h5 fw-bold">
+                        Practise Interview Questions
+                    </h3>
+
+                    <p class="text-secondary">
+                        Work through interview questions,
+                        submit your responses and develop
+                        confidence at your own pace.
+                    </p>
+
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="p-4 h-100">
+
+                    <div class="fs-1 fw-bold text-primary mb-3">
+                        03
+                    </div>
+
+                    <h3 class="h5 fw-bold">
+                        Review Your Progress
+                    </h3>
+
+                    <p class="text-secondary">
+                        Complete your interview sessions,
+                        review your results and use your
+                        interview history to reflect on
+                        your development.
+                    </p>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+
+<!-- =========================================
+     CAREER CALL TO ACTION
+     ========================================= -->
+
+<section class="container py-5 home-cta desktop-home-content">
+
+    <div class="bg-primary text-white rounded-4 p-4 p-md-5">
+
+        <div class="row align-items-center g-4">
+
+            <div class="col-lg-8">
+
+                <h2 class="fw-bold mb-3">
+                    Take the Next Step in Your Career Journey
+                </h2>
+
+                <p class="lead mb-0">
+                    Your career development is a continuous
+                    journey. Start preparing today, strengthen
+                    your interview skills and build the
+                    confidence to communicate your potential.
+                </p>
+
+            </div>
+
+            <div class="col-lg-4 text-lg-end">
+
+                <a asp-controller="InterviewCategories"
+                   asp-action="Index"
+                   class="btn btn-light btn-lg px-4">
+                    Explore Interview Categories
+                </a>
+
+            </div>
+
+        </div>
+    </div>
+</section>

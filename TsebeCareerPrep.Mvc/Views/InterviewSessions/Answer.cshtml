@@ -4,46 +4,74 @@
     ViewData["Title"] = "Answer Interview Question";
 }
 
-<div class="container mt-4 mb-5">
+<section class="interview-answer-page">
 
-    <div class="mb-4">
+    <!-- =====================================
+         ANSWER PAGE HEADER
+         ===================================== -->
+
+    <div class="interview-answer-header">
+
         <a asp-controller="InterviewSessions"
            asp-action="Details"
            asp-route-id="@Model.InterviewSessionId"
-           class="btn btn-outline-secondary mb-3">
+           class="interview-back-link">
+
+            <span aria-hidden="true">&#8592;</span>
             Back to Interview Session
+
         </a>
 
-        <h1 class="fw-bold">Interview Practice</h1>
-
-        <p class="text-muted">
-            Read the question carefully and provide your answer.
+        <p class="interview-answer-eyebrow">
+            INTERVIEW PRACTICE
         </p>
+
+        <h1>
+            Answer Interview Question
+        </h1>
+
+        <p class="interview-answer-introduction">
+            Take your time, organise your thoughts and
+            communicate your answer clearly.
+        </p>
+
     </div>
 
-    <div class="card shadow-sm">
 
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">
-                Interview Question
-            </h5>
-        </div>
+    <!-- =====================================
+         QUESTION AND ANSWER CONTENT
+         ===================================== -->
 
-        <div class="card-body">
+    <div class="interview-answer-content">
 
-            <div class="mb-4">
-                <span class="badge bg-secondary mb-2">
+        <article class="interview-answer-card">
+
+            <!-- Question information -->
+
+            <div class="interview-answer-question">
+
+                <span class="interview-answer-question-label">
                     Question @Model.InterviewQuestionId
                 </span>
 
-                <h4 class="mt-2">
+                <h2>
                     @Model.QuestionText
-                </h4>
+                </h2>
+
+                <p>
+                    Consider your knowledge, experience and
+                    relevant examples before responding.
+                </p>
+
             </div>
+
+
+            <!-- Answer submission form -->
 
             <form asp-controller="InterviewSessions"
                   asp-action="Answer"
-                  method="post">
+                  method="post"
+                  class="interview-answer-form">
 
                 @Html.AntiForgeryToken()
 
@@ -54,53 +82,103 @@
                        type="hidden" />
 
                 <div asp-validation-summary="ModelOnly"
-                     class="text-danger mb-3">
+                     class="text-danger mb-3"
+                     role="alert">
                 </div>
 
-                <div class="mb-3">
+                <div class="interview-answer-field">
 
                     <label asp-for="AnswerText"
-                           class="form-label fw-semibold">
+                           class="form-label interview-answer-label">
+
                         Your Answer
+
                     </label>
 
+                    <p class="interview-answer-help">
+                        Write your response in your own words.
+                        Aim for a clear, relevant and
+                        well-structured answer.
+                    </p>
+
                     <textarea asp-for="AnswerText"
-                              class="form-control"
-                              rows="8"
+                              class="form-control interview-answer-textarea"
+                              rows="9"
                               maxlength="5000"
-                              placeholder="Type your interview answer here..."></textarea>
+                              placeholder="Type your interview answer here..."
+                              aria-describedby="answerCharacterLimit"></textarea>
 
                     <span asp-validation-for="AnswerText"
-                          class="text-danger"></span>
+                          class="text-danger d-block mt-2">
+                    </span>
 
-                    <div class="form-text">
-                        Maximum 5,000 characters.
+                    <div class="interview-answer-field-footer">
+
+                        <span id="answerCharacterLimit">
+                            Maximum 5,000 characters
+                        </span>
+
                     </div>
 
                 </div>
 
-                <div class="d-flex flex-wrap gap-2">
+
+                <!-- Form actions -->
+
+                <div class="interview-answer-actions">
 
                     <button type="submit"
-                            class="btn btn-primary">
+                            class="btn btn-primary interview-submit-button">
+
                         Submit Answer
+
                     </button>
 
                     <a asp-controller="InterviewSessions"
                        asp-action="Details"
                        asp-route-id="@Model.InterviewSessionId"
-                       class="btn btn-outline-secondary">
+                       class="btn btn-outline-secondary interview-cancel-button">
+
                         Cancel
+
                     </a>
 
                 </div>
 
             </form>
 
-        </div>
+        </article>
+
+
+        <!-- Preparation reminder -->
+
+        <aside class="interview-answer-tip">
+
+            <div class="interview-answer-tip-icon"
+                 aria-hidden="true">
+                💡
+            </div>
+
+            <div>
+
+                <h2>
+                    Interview Preparation Tip
+                </h2>
+
+                <p>
+                    Focus on answering the question directly.
+                    Where appropriate, support your response
+                    with practical examples from your studies,
+                    work experience or personal projects.
+                </p>
+
+            </div>
+
+        </aside>
+
     </div>
 
-</div>
+</section>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

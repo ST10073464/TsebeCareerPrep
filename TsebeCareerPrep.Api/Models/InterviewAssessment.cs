@@ -1,0 +1,35 @@
+﻿
+using System.ComponentModel.DataAnnotations;
+
+namespace TsebeCareerPrep.Api.Models
+{
+    public class InterviewAssessment
+    {
+        public int Id { get; set; }
+
+        [Required]
+        public int InterviewResponseId { get; set; }
+
+        public InterviewResponse? InterviewResponse { get; set; }
+
+        [Range(0, 10)]
+        public int Score { get; set; }
+
+        [MaxLength(2000)]
+        public string Strengths { get; set; } = string.Empty;
+
+        [MaxLength(2000)]
+        public string AreasForImprovement { get; set; } = string.Empty;
+
+        [MaxLength(2000)]
+        public string ImprovementGuidance { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(50)]
+        public string AssessmentMethod { get; set; }
+            = "CriteriaBased";
+
+        public DateTime AssessedAt { get; set; }
+            = DateTime.UtcNow;
+    }
+}

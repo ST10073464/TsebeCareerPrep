@@ -56,8 +56,10 @@ namespace TsebeCareerPrep.Mvc.Controllers
                     "The interview API returned an invalid response.");
             }
 
+
             return RedirectToAction(
-                "Details", new { id = session.Id });
+                "Questions", new { id = session.Id });
+
         }
 
         // GET: /InterviewSessions/Details/1
@@ -172,14 +174,21 @@ namespace TsebeCareerPrep.Mvc.Controllers
                     model.AnswerText
                 });
 
+
             if (response.IsSuccessStatusCode)
             {
-                TempData["Success"] = "Your answer was submitted successfully.";
+                TempData["Success"] =
+                    "Your answer was submitted successfully.";
 
                 return RedirectToAction(
-                    "Details",
-                    new { id = model.InterviewSessionId });
+                    "Questions",
+                    new
+                    {
+                        id = model.InterviewSessionId,
+                        answeredQuestionId = model.InterviewQuestionId
+                    });
             }
+
 
             if (response.StatusCode == HttpStatusCode.Conflict)
             {
@@ -320,13 +329,15 @@ namespace TsebeCareerPrep.Mvc.Controllers
                 $"api/InterviewSessions/{id}/complete",
                 null);
 
+
             if (response.IsSuccessStatusCode)
             {
                 TempData["Success"] =
                     "Your interview has been completed successfully.";
 
-                return RedirectToAction("Details", new { id });
+                return RedirectToAction("Results", new { id });
             }
+
 
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
@@ -352,29 +363,68 @@ namespace TsebeCareerPrep.Mvc.Controllers
             return RedirectToAction("Details", new { id });
         }
 
+
+        // POST: /InterviewSessions/Reopen/38
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Reopen(int id)
+        {
+            if (id <= 0)
+                return BadRequest("Invalid interview session ID.");
+
+            var client = _httpClientFactory.CreateClient(
+                "AuthenticatedInterviewApi");
+
+            var response = await client.PostAsync(
+                $"api/InterviewSessions/{id}/reopen",
+                null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                TempData["Success"] =
+                    "Your interview has been reopened. Continue answering the remaining questions.";
+
+                return RedirectToAction("Questions", new { id });
+            }
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+                return NotFound("Interview session not found.");
+
+            if (response.StatusCode == HttpStatusCode.Conflict)
+            {
+                TempData["Error"] =
+                    "This interview cannot be reopened. It may already be active or have no unanswered questions.";
+            }
+            else
+            {
+                TempData["Error"] =
+                    "Unable to reopen the interview. Please try again.";
+            }
+
+            return RedirectToAction("Details", new { id });
+        }
+
+
         // GET: /InterviewSessions/Results/3
         [HttpGet]
         public async Task<IActionResult> Results(int id)
         {
             if (id <= 0)
-            {
                 return BadRequest("Invalid interview session ID.");
-            }
 
-            var client = _httpClientFactory.CreateClient("AuthenticatedInterviewApi");
+            var client = _httpClientFactory.CreateClient(
+                "AuthenticatedInterviewApi");
 
             var response = await client.GetAsync(
                 $"api/InterviewSessions/{id}/results");
 
             if (response.StatusCode == HttpStatusCode.NotFound)
-            {
                 return NotFound("Interview session not found.");
-            }
 
             if (response.StatusCode == HttpStatusCode.BadRequest)
             {
                 TempData["Error"] =
-                    "Interview results are available only after completing the session.";
+                    "Complete the interview before viewing results.";
 
                 return RedirectToAction("Details", new { id });
             }
@@ -390,6 +440,37 @@ namespace TsebeCareerPrep.Mvc.Controllers
                     502,
                     "The interview API returned an invalid results response.");
             }
+
+            // The Results API now provides all category questions,
+            // including suggested answers for skipped questions.
+            var responsesByQuestionId = model.Responses
+                .GroupBy(r => r.InterviewQuestionId)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            model.Questions = model.Questions
+                .Select((question, index) =>
+                {
+                    responsesByQuestionId.TryGetValue(
+                        question.Id,
+                        out var answer);
+
+                    question.QuestionNumber = index + 1;
+                    question.InterviewQuestionId = question.Id;
+                    question.IsAnswered = answer != null;
+                    question.AnswerText =
+                        answer?.AnswerText ?? string.Empty;
+                    question.SubmittedAt = answer?.SubmittedAt;
+
+                    // Show feedback for answered questions only.
+                    question.AssessmentFeedback = answer?.AssessmentFeedback;
+
+                    return question;
+                })
+                .ToList();
+
+            model.TotalQuestions = model.Questions.Count;
+            model.TotalAnswered = model.Questions
+                .Count(q => q.IsAnswered);
 
             return View(model);
         }

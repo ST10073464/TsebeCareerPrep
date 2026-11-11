@@ -2,111 +2,166 @@
 
 @{
     ViewData["Title"] = "Interview Session";
+
+    var isInProgress = Model.Status == "InProgress";
+    var isCompleted = Model.Status == "Completed";
 }
 
-<div class="container mt-4 mb-5">
+<section class="interview-session-page">
 
-    
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success" role="alert">
-        @TempData["Success"]
-    </div>
-}
+    <header class="interview-session-header">
 
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger" role="alert">
-        @TempData["Error"]
-    </div>
-}
-
-
-    <div class="mb-4">
         <a asp-controller="InterviewCategories"
            asp-action="Index"
-           class="btn btn-outline-secondary mb-3">
-            Back to Categories
+           class="interview-back-link">
+            ← Back to Categories
         </a>
 
-        <h1 class="fw-bold">Interview Session</h1>
-
-        <p class="text-muted">
-            Your interview practice session details.
+        <p class="interview-session-eyebrow">
+            YOUR INTERVIEW JOURNEY
         </p>
-    </div>
 
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">
+        <h1>Interview Session</h1>
+
+        <p class="interview-session-introduction">
+            Review your interview details and continue
+            preparing for your next career opportunity.
+        </p>
+
+        <div class="interview-session-header-badges">
+
+            <span class="interview-session-category-pill">
                 @Model.CategoryName
-            </h5>
+            </span>
+
+            @if (isInProgress)
+            {
+                <span class="interview-session-status-pill in-progress">
+                    In Progress
+                </span>
+            }
+            else if (isCompleted)
+            {
+                <span class="interview-session-status-pill completed">
+                    Completed
+                </span>
+            }
+            else
+            {
+                <span class="interview-session-status-pill">
+                    @Model.Status
+                </span>
+            }
+
         </div>
 
-        <div class="card-body">
+    </header>
 
-            <dl class="row">
-                <dt class="col-sm-4">Session ID</dt>
-                <dd class="col-sm-8">@Model.Id</dd>
+    <div class="interview-session-content">
 
-                <dt class="col-sm-4">Interview Category</dt>
-                <dd class="col-sm-8">@Model.CategoryName</dd>
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success" role="alert">
+                @TempData["Success"]
+            </div>
+        }
 
-                <dt class="col-sm-4">Started At (UTC)</dt>
-                <dd class="col-sm-8">
-                    @Model.StartedAt.ToString("dd MMM yyyy HH:mm")
-                </dd>
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                @TempData["Error"]
+            </div>
+        }
 
-                <dt class="col-sm-4">Status</dt>
-                <dd class="col-sm-8">
-                    @if (Model.Status == "InProgress")
+        <div class="interview-session-details-card">
+
+            <div class="interview-session-section-heading">
+                <h2>Session Overview</h2>
+                <p>
+                    Your interview practice information.
+                </p>
+            </div>
+
+            <div class="interview-session-details-grid">
+
+                <div class="interview-session-detail-item">
+                    <span>Session Reference</span>
+                    <strong>#@Model.Id</strong>
+                </div>
+
+                <div class="interview-session-detail-item">
+                    <span>Interview Category</span>
+                    <strong>@Model.CategoryName</strong>
+                </div>
+
+                <div class="interview-session-detail-item">
+                    <span>Started At (UTC)</span>
+                    <strong>
+                        @Model.StartedAt.ToString("dd MMM yyyy HH:mm")
+                    </strong>
+                </div>
+
+                <div class="interview-session-detail-item">
+                    <span>Current Status</span>
+
+                    @if (isInProgress)
                     {
-                        <span class="badge bg-warning text-dark">
+                        <strong class="interview-session-status-text in-progress">
                             In Progress
-                        </span>
+                        </strong>
                     }
-                    else if (Model.Status == "Completed")
+                    else if (isCompleted)
                     {
-                        <span class="badge bg-success">
+                        <strong class="interview-session-status-text completed">
                             Completed
-                        </span>
+                        </strong>
                     }
                     else
                     {
-                        <span class="badge bg-secondary">
-                            @Model.Status
-                        </span>
+                        <strong>@Model.Status</strong>
                     }
-                </dd>
+
+                </div>
 
                 @if (Model.CompletedAt.HasValue)
                 {
-                    <dt class="col-sm-4">Completed At (UTC)</dt>
-                    <dd class="col-sm-8">
-                        @Model.CompletedAt.Value.ToString(
-                            "dd MMM yyyy HH:mm")
-                    </dd>
+                    <div class="interview-session-detail-item">
+                        <span>Completed At (UTC)</span>
+                        <strong>
+                            @Model.CompletedAt.Value.ToString("dd MMM yyyy HH:mm")
+                        </strong>
+                    </div>
                 }
-            </dl>
 
-            <hr />
+            </div>
 
-            @if (Model.Status == "InProgress")
-            {
-                <div class="alert alert-info">
-                    Your interview session is active.
-                    You can now begin practising questions.
+        </div>
+
+        @if (isInProgress)
+        {
+            <div class="interview-session-action-card">
+
+                <div class="interview-session-action-heading">
+                    <span class="interview-session-action-icon"
+                          aria-hidden="true">🎯</span>
+
+                    <div>
+                        <h2>Continue Your Interview</h2>
+
+                        <p>
+                            Your interview is currently active.
+                            Continue answering questions at your own pace.
+                        </p>
+                    </div>
                 </div>
 
-               
-                
-                <div class="d-flex flex-wrap gap-2">
+                <div class="interview-session-actions">
 
                     <a asp-controller="InterviewSessions"
                        asp-action="Questions"
                        asp-route-id="@Model.Id"
-                       class="btn btn-primary">
-                        View Interview Questions
+                       class="btn btn-primary interview-session-primary-button">
+                        Continue Interview
                     </a>
 
                     <form asp-controller="InterviewSessions"
@@ -118,7 +173,7 @@
                         @Html.AntiForgeryToken()
 
                         <button type="submit"
-                                class="btn btn-success">
+                                class="btn btn-outline-success interview-session-secondary-button">
                             Complete Interview
                         </button>
 
@@ -126,44 +181,56 @@
 
                 </div>
 
+                <p class="interview-session-action-note">
+                    Complete your interview when you are ready to
+                    review your results. At least one answer must
+                    be submitted before completion.
+                </p>
 
+            </div>
+        }
+        else if (isCompleted)
+        {
+            <div class="interview-session-action-card completed">
 
-            }
+                <div class="interview-session-action-heading">
 
-            
-            else if (Model.Status == "Completed")
-            {
-                <div class="alert alert-success" role="alert">
-                    <strong>Interview Completed!</strong>
+                    <span class="interview-session-action-icon"
+                          aria-hidden="true">✓</span>
 
-                    <p class="mb-0 mt-2">
-                        You have successfully completed your interview.
-                        You can now review your submitted answers
-                        alongside the suggested answers.
-                    </p>
+                    <div>
+                        <h2>Interview Completed!</h2>
+
+                        <p>
+                            Well done on completing your interview.
+                            Review your submitted answers alongside
+                            the suggested answers to identify
+                            opportunities for improvement.
+                        </p>
+                    </div>
+
                 </div>
 
-                <div class="d-flex flex-wrap gap-2 mt-3">
+                <div class="interview-session-actions">
 
                     <a asp-controller="InterviewSessions"
                        asp-action="Results"
                        asp-route-id="@Model.Id"
-                       class="btn btn-success">
+                       class="btn btn-success interview-session-primary-button">
                         View Interview Results
                     </a>
 
                     <a asp-controller="InterviewCategories"
                        asp-action="Index"
-                       class="btn btn-outline-primary">
+                       class="btn btn-outline-primary interview-session-secondary-button">
                         Start Another Interview
                     </a>
 
                 </div>
-            }
 
-            
+            </div>
+        }
 
-        </div>
     </div>
 
-</div>
+</section>
