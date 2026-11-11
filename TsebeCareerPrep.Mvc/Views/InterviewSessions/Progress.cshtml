@@ -1,0 +1,169 @@
+﻿@model TsebeCareerPrep.Mvc.Models.InterviewProgressViewModel
+
+@{
+    ViewData["Title"] = "Interview Progress";
+
+    var completionRate = Math.Clamp(
+        Model.CompletionRate, 0, 100);
+}
+
+<div class="container py-4 py-md-5">
+
+    <div class="d-flex flex-wrap justify-content-between
+        align-items-center gap-3 mb-4">
+
+        <div>
+            <h1 class="fw-bold mb-2">
+                Interview Progress
+            </h1>
+
+            <p class="text-muted mb-0">
+                Track your interview practice activity
+                and completion progress.
+            </p>
+        </div>
+
+        <a asp-controller="InterviewSessions"
+           asp-action="History"
+           class="btn btn-outline-primary">
+            View Interview History
+        </a>
+
+    </div>
+
+    <!-- Interview statistics -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted mb-2">
+                        Total Interviews
+                    </p>
+
+                    <h2 class="fw-bold mb-0">
+                        @Model.TotalInterviews
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted mb-2">
+                        Completed Interviews
+                    </p>
+
+                    <h2 class="fw-bold text-success mb-0">
+                        @Model.CompletedInterviews
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted mb-2">
+                        Interviews In Progress
+                    </p>
+
+                    <h2 class="fw-bold text-warning mb-0">
+                        @Model.InProgressInterviews
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted mb-2">
+                        Total Answers Submitted
+                    </p>
+
+                    <h2 class="fw-bold text-primary mb-0">
+                        @Model.TotalAnswers
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Completion progress -->
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body p-4">
+
+            <div class="d-flex flex-wrap
+                justify-content-between
+                align-items-center gap-2 mb-3">
+
+                <h3 class="h5 fw-bold mb-0">
+                    Interview Completion Rate
+                </h3>
+
+                <span class="fw-bold text-primary fs-4">
+                    @completionRate.ToString("0.0")%
+                </span>
+
+            </div>
+
+            <div class="progress"
+                 style="height: 22px;"
+                 role="progressbar"
+                 aria-label="Interview completion rate"
+                 aria-valuenow="@completionRate.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                 aria-valuemin="0"
+                 aria-valuemax="100">
+
+                <div class="progress-bar bg-success"
+                     style="width: @(completionRate.ToString(System.Globalization.CultureInfo.InvariantCulture))%;">
+                </div>
+
+            </div>
+
+            <p class="text-muted small mt-3 mb-0">
+                @Model.CompletedInterviews of
+                @Model.TotalInterviews interview sessions completed.
+            </p>
+
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="card shadow-sm">
+
+        <div class="card-body p-4">
+
+            <h3 class="h5 fw-bold">
+                Continue Your Interview Preparation
+            </h3>
+
+            <p class="text-muted">
+                Start a new interview or return to
+                an unfinished practice session.
+            </p>
+
+            <div class="d-flex flex-wrap gap-2">
+
+                <a asp-controller="InterviewCategories"
+                   asp-action="Index"
+                   class="btn btn-primary">
+                    Start New Interview
+                </a>
+
+                <a asp-controller="InterviewSessions"
+                   asp-action="History"
+                   class="btn btn-outline-secondary">
+                    View Previous Interviews
+                </a>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>

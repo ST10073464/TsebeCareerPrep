@@ -213,6 +213,64 @@ namespace TsebeCareerPrep.Api.Controllers
         }
 
 
+        // GET: api/InterviewSessions/history
+        [HttpGet("history")]
+        public async Task<IActionResult> GetInterviewHistory()
+        {
+            var sessions = await _context.InterviewSessions
+                .AsNoTracking()
+                .OrderByDescending(s => s.StartedAt)
+                .Select(s => new
+                {
+                    s.Id,
+                    s.InterviewCategoryId,
+                    CategoryName = s.InterviewCategory!.Name,
+                    s.Status,
+                    s.StartedAt,
+                    s.CompletedAt,
+                    TotalAnswered = _context.InterviewResponses
+                        .Count(r => r.InterviewSessionId == s.Id)
+                })
+                .ToListAsync();
+
+            return Ok(sessions);
+        }
+
+
+        // GET: api/InterviewSessions/progress
+        [HttpGet("progress")]
+        public async Task<IActionResult> GetInterviewProgress()
+        {
+            var totalInterviews =
+                await _context.InterviewSessions.CountAsync();
+
+            var completedInterviews =
+                await _context.InterviewSessions.CountAsync(
+                    s => s.Status == "Completed");
+
+            var inProgressInterviews =
+                await _context.InterviewSessions.CountAsync(
+                    s => s.Status == "InProgress");
+
+            var totalAnswers =
+                await _context.InterviewResponses.CountAsync();
+
+            var completionRate = totalInterviews > 0
+                ? Math.Round(
+                    (double)completedInterviews
+                    / totalInterviews * 100, 1)
+                : 0;
+
+            return Ok(new
+            {
+                TotalInterviews = totalInterviews,
+                CompletedInterviews = completedInterviews,
+                InProgressInterviews = inProgressInterviews,
+                TotalAnswers = totalAnswers,
+                CompletionRate = completionRate
+            });
+        }
+
     }
 
 }

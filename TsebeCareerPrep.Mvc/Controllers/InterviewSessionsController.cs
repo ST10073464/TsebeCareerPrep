@@ -403,5 +403,62 @@ namespace TsebeCareerPrep.Mvc.Controllers
         }
 
 
+        // GET: /InterviewSessions/History
+        [HttpGet]
+        public async Task<IActionResult> History()
+        {
+            var client = _httpClientFactory.CreateClient();
+
+            client.BaseAddress =
+                new Uri("https://localhost:7101/");
+
+            var response = await client.GetAsync(
+                "api/InterviewSessions/history");
+
+            response.EnsureSuccessStatusCode();
+
+            var sessions = await response.Content
+                .ReadFromJsonAsync<List<InterviewHistoryViewModel>>()
+                ?? new List<InterviewHistoryViewModel>();
+
+            return View(sessions);
+        }
+
+
+        // GET: /InterviewSessions/Progress
+        [HttpGet]
+        public async Task<IActionResult> Progress()
+        {
+            var client = _httpClientFactory.CreateClient();
+
+            client.BaseAddress =
+                new Uri("https://localhost:7101/");
+
+            var response = await client.GetAsync(
+                "api/InterviewSessions/progress");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return StatusCode(
+                    502,
+                    "Unable to retrieve interview progress. Please try again.");
+            }
+
+            var model = await response.Content
+                .ReadFromJsonAsync<InterviewProgressViewModel>();
+
+            if (model == null)
+            {
+                return StatusCode(
+                    502,
+                    "The interview API returned an invalid progress response.");
+            }
+
+            return View(model);
+        }
+
+
+
+
     }
 }
