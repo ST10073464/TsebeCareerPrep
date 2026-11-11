@@ -1,10 +1,12 @@
 ﻿
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TsebeCareerPrep.Api.Models;
 
 namespace TsebeCareerPrep.Api.Data
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext
     {
         public ApplicationDbContext(
             DbContextOptions<ApplicationDbContext> options)
@@ -41,6 +43,15 @@ namespace TsebeCareerPrep.Api.Data
                 .HasOne(s => s.InterviewCategory)
                 .WithMany()
                 .HasForeignKey(s => s.InterviewCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // IdentityUser -> InterviewSession
+            // Each session belongs to one registered user.
+            modelBuilder.Entity<InterviewSession>()
+                .HasOne(s => s.User)
+                .WithMany()
+                .HasForeignKey(s => s.UserId)
+                .IsRequired()
                 .OnDelete(DeleteBehavior.Restrict);
 
             // InterviewSession -> InterviewResponse

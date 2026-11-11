@@ -1,5 +1,6 @@
 ﻿
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
 
 namespace TsebeCareerPrep.Api.Models
 {
@@ -11,6 +12,13 @@ namespace TsebeCareerPrep.Api.Models
         public int InterviewCategoryId { get; set; }
 
         public InterviewCategory? InterviewCategory { get; set; }
+
+        // Registered user who owns this session.
+        [Required]
+        public string UserId { get; set; } = string.Empty;
+
+        // Relationship to ASP.NET Core Identity.
+        public IdentityUser? User { get; set; }
 
         public DateTime StartedAt { get; set; }
             = DateTime.UtcNow;

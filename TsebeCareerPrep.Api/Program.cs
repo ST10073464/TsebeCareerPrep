@@ -1,26 +1,112 @@
+
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TsebeCareerPrep.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Register the system time provider required by Identity services.
+builder.Services.AddSingleton<TimeProvider>(
+    TimeProvider.System);
 
+
+// Configure a shared Data Protection key ring
+// for the API and MVC applications.
+var sharedKeysPath = Path.GetFullPath(
+    Path.Combine(
+        builder.Environment.ContentRootPath,
+        "..",
+        "SharedAuthKeys"));
+
+Directory.CreateDirectory(sharedKeysPath);
+
+builder.Services.AddDataProtection()
+    .SetApplicationName("TsebeCareerPrep")
+    .PersistKeysToFileSystem(
+        new DirectoryInfo(sharedKeysPath));
+
+
+// SQL Server database connection.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
+// ASP.NET Core Identity configuration.
+builder.Services
+    .AddIdentityCore<IdentityUser>(options =>
+    {
+        options.User.RequireUniqueEmail = true;
 
-// Add services to the container.
+        options.Password.RequiredLength = 8;
+        options.Password.RequireDigit = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireNonAlphanumeric = true;
 
+        // Development testing: lock accounts for 30 seconds.
+        options.Lockout.DefaultLockoutTimeSpan =
+            TimeSpan.FromSeconds(30);
+
+        options.Lockout.MaxFailedAccessAttempts = 5;
+    })
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddSignInManager()
+    .AddDefaultTokenProviders();
+
+
+builder.Services
+    .AddAuthentication(
+        IdentityConstants.ApplicationScheme)
+    .AddIdentityCookies();
+
+builder.Services.AddAuthorization();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.Name = "TsebeCareerPrep.Auth";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy =
+        CookieSecurePolicy.Always;
+    options.Cookie.SameSite =
+        SameSiteMode.Lax;
+
+    options.ExpireTimeSpan =
+        TimeSpan.FromMinutes(30);
+
+    options.SlidingExpiration = true;
+
+    // API endpoints should return HTTP status codes,
+    // not redirect to HTML login pages.
+    options.Events.OnRedirectToLogin = context =>
+    {
+        context.Response.StatusCode =
+            StatusCodes.Status401Unauthorized;
+
+        return Task.CompletedTask;
+    };
+
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        context.Response.StatusCode =
+            StatusCodes.Status403Forbidden;
+
+        return Task.CompletedTask;
+    };
+});
+
+
+// API controllers and Swagger.
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-
+// Preserve existing development database seeding.
 if (app.Environment.IsDevelopment())
 {
     using (var scope = app.Services.CreateScope())
@@ -32,8 +118,7 @@ if (app.Environment.IsDevelopment())
     }
 }
 
-
-// Configure the HTTP request pipeline.
+// Swagger is available during development.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -42,6 +127,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

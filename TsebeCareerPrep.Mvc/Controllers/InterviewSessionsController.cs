@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using System.Net.Http.Json;
 using TsebeCareerPrep.Mvc.Models;
 using System.Net;
 
 namespace TsebeCareerPrep.Mvc.Controllers
 {
+    [Authorize]
     public class InterviewSessionsController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;
@@ -26,10 +28,8 @@ namespace TsebeCareerPrep.Mvc.Controllers
                     "Please select a valid interview category.");
             }
 
-            var client = _httpClientFactory.CreateClient();
+            var client = _httpClientFactory.CreateClient("AuthenticatedInterviewApi");
 
-            client.BaseAddress =
-                new Uri("https://localhost:7101/");
 
             var response = await client.PostAsJsonAsync(
                 "api/InterviewSessions/start",
@@ -67,10 +67,8 @@ namespace TsebeCareerPrep.Mvc.Controllers
             if (id <= 0)
                 return BadRequest();
 
-            var client = _httpClientFactory.CreateClient();
+            var client = _httpClientFactory.CreateClient("AuthenticatedInterviewApi");
 
-            client.BaseAddress =
-                new Uri("https://localhost:7101/");
 
             var response = await client.GetAsync(
                 $"api/InterviewSessions/{id}");
@@ -102,8 +100,7 @@ namespace TsebeCareerPrep.Mvc.Controllers
             if (sessionId <= 0 || questionId <= 0)
                 return BadRequest();
 
-            var client = _httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri("https://localhost:7101/");
+            var client = _httpClientFactory.CreateClient("AuthenticatedInterviewApi");
 
             var sessionResponse = await client.GetAsync(
                 $"api/InterviewSessions/{sessionId}");
@@ -164,8 +161,7 @@ namespace TsebeCareerPrep.Mvc.Controllers
                 return await RedisplayAnswer(model);
             }
 
-            var client = _httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri("https://localhost:7101/");
+            var client = _httpClientFactory.CreateClient("AuthenticatedInterviewApi");
 
             var response = await client.PostAsJsonAsync(
                 "api/InterviewResponses/submit",
@@ -204,8 +200,7 @@ namespace TsebeCareerPrep.Mvc.Controllers
         private async Task<IActionResult> RedisplayAnswer(
             SubmitInterviewAnswerViewModel model)
         {
-            var client = _httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri("https://localhost:7101/");
+            var client = _httpClientFactory.CreateClient("AuthenticatedInterviewApi");
 
             var response = await client.GetAsync(
                 $"api/InterviewQuestions/{model.InterviewQuestionId}");
@@ -236,8 +231,7 @@ namespace TsebeCareerPrep.Mvc.Controllers
             if (id <= 0)
                 return BadRequest("Invalid interview session ID.");
 
-            var client = _httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri("https://localhost:7101/");
+            var client = _httpClientFactory.CreateClient("AuthenticatedInterviewApi");
 
             // Retrieve the active interview session.
             var sessionResponse = await client.GetAsync(
@@ -320,8 +314,7 @@ namespace TsebeCareerPrep.Mvc.Controllers
                 return BadRequest("Invalid interview session ID.");
             }
 
-            var client = _httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri("https://localhost:7101/");
+            var client = _httpClientFactory.CreateClient("AuthenticatedInterviewApi");
 
             var response = await client.PostAsync(
                 $"api/InterviewSessions/{id}/complete",
@@ -368,8 +361,7 @@ namespace TsebeCareerPrep.Mvc.Controllers
                 return BadRequest("Invalid interview session ID.");
             }
 
-            var client = _httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri("https://localhost:7101/");
+            var client = _httpClientFactory.CreateClient("AuthenticatedInterviewApi");
 
             var response = await client.GetAsync(
                 $"api/InterviewSessions/{id}/results");
@@ -407,10 +399,8 @@ namespace TsebeCareerPrep.Mvc.Controllers
         [HttpGet]
         public async Task<IActionResult> History()
         {
-            var client = _httpClientFactory.CreateClient();
+            var client = _httpClientFactory.CreateClient("AuthenticatedInterviewApi");
 
-            client.BaseAddress =
-                new Uri("https://localhost:7101/");
 
             var response = await client.GetAsync(
                 "api/InterviewSessions/history");
@@ -429,10 +419,8 @@ namespace TsebeCareerPrep.Mvc.Controllers
         [HttpGet]
         public async Task<IActionResult> Progress()
         {
-            var client = _httpClientFactory.CreateClient();
+            var client = _httpClientFactory.CreateClient("AuthenticatedInterviewApi");
 
-            client.BaseAddress =
-                new Uri("https://localhost:7101/");
 
             var response = await client.GetAsync(
                 "api/InterviewSessions/progress");
@@ -456,9 +444,6 @@ namespace TsebeCareerPrep.Mvc.Controllers
 
             return View(model);
         }
-
-
-
 
     }
 }

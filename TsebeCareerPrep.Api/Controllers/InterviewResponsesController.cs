@@ -1,4 +1,6 @@
 ﻿
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TsebeCareerPrep.Api.Data;
@@ -7,6 +9,7 @@ using TsebeCareerPrep.Api.Models;
 namespace TsebeCareerPrep.Api.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class InterviewResponsesController : ControllerBase
     {
@@ -18,15 +21,28 @@ namespace TsebeCareerPrep.Api.Controllers
             _context = context;
         }
 
+        private string? GetCurrentUserId()
+        {
+            return User.FindFirstValue(
+                ClaimTypes.NameIdentifier);
+        }
+
         // POST: api/InterviewResponses/submit
         [HttpPost("submit")]
         public async Task<IActionResult> SubmitResponse(
             [FromBody] SubmitInterviewResponseRequest request)
         {
-            // Check that the interview session exists.
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            // Find the session only if it belongs
+            // to the authenticated user.
             var session = await _context.InterviewSessions
                 .FirstOrDefaultAsync(s =>
-                    s.Id == request.InterviewSessionId);
+                    s.Id == request.InterviewSessionId &&
+                    s.UserId == userId);
 
             if (session == null)
             {
@@ -36,7 +52,6 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
-            // Check that the session is still active.
             if (session.Status != "InProgress")
             {
                 return BadRequest(new
@@ -45,13 +60,13 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
-            // Check that the question exists and belongs
-            // to the selected interview category.
+            // Validate the question and its category.
             var question = await _context.InterviewQuestions
                 .AsNoTracking()
                 .FirstOrDefaultAsync(q =>
                     q.Id == request.InterviewQuestionId &&
-                    q.InterviewCategoryId == session.InterviewCategoryId &&
+                    q.InterviewCategoryId ==
+                        session.InterviewCategoryId &&
                     q.IsActive);
 
             if (question == null)
@@ -62,7 +77,7 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
-            // Prevent duplicate answers for the same question.
+            // Prevent duplicate answers.
             var alreadyAnswered = await _context.InterviewResponses
                 .AnyAsync(r =>
                     r.InterviewSessionId == session.Id &&
@@ -76,7 +91,15 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
-            // Save the user's answer.
+            // Validate the submitted answer.
+            if (string.IsNullOrWhiteSpace(request.AnswerText))
+            {
+                return BadRequest(new
+                {
+                    message = "Answer cannot be empty."
+                });
+            }
+
             var response = new InterviewResponse
             {
                 InterviewSessionId = session.Id,
@@ -84,14 +107,6 @@ namespace TsebeCareerPrep.Api.Controllers
                 AnswerText = request.AnswerText.Trim(),
                 SubmittedAt = DateTime.UtcNow
             };
-
-            if (string.IsNullOrWhiteSpace(response.AnswerText))
-            {
-                return BadRequest(new
-                {
-                    message = "Answer cannot be empty."
-                });
-            }
 
             _context.InterviewResponses.Add(response);
             await _context.SaveChangesAsync();
@@ -112,9 +127,16 @@ namespace TsebeCareerPrep.Api.Controllers
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetResponse(int id)
         {
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
             var response = await _context.InterviewResponses
                 .AsNoTracking()
-                .Where(r => r.Id == id)
+                .Where(r =>
+                    r.Id == id &&
+                    r.InterviewSession!.UserId == userId)
                 .Select(r => new
                 {
                     r.Id,
@@ -135,26 +157,37 @@ namespace TsebeCareerPrep.Api.Controllers
 
         // GET: api/InterviewResponses/session/3
         [HttpGet("session/{sessionId:int}")]
-        public async Task<IActionResult> GetSessionResponses(int sessionId)
+        public async Task<IActionResult> GetSessionResponses(
+            int sessionId)
         {
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
             if (sessionId <= 0)
             {
-                return BadRequest("Invalid interview session ID.");
+                return BadRequest(
+                    "Invalid interview session ID.");
             }
 
-            // Confirm the session exists.
+            // Check ownership before retrieving responses.
             var sessionExists = await _context.InterviewSessions
-                .AnyAsync(s => s.Id == sessionId);
+                .AnyAsync(s =>
+                    s.Id == sessionId &&
+                    s.UserId == userId);
 
             if (!sessionExists)
             {
-                return NotFound("Interview session not found.");
+                return NotFound(
+                    "Interview session not found.");
             }
 
-            // Retrieve answered question IDs for this session.
             var responses = await _context.InterviewResponses
                 .AsNoTracking()
-                .Where(r => r.InterviewSessionId == sessionId)
+                .Where(r =>
+                    r.InterviewSessionId == sessionId &&
+                    r.InterviewSession!.UserId == userId)
                 .OrderBy(r => r.InterviewQuestionId)
                 .Select(r => new
                 {
@@ -167,6 +200,5 @@ namespace TsebeCareerPrep.Api.Controllers
 
             return Ok(responses);
         }
-
     }
 }

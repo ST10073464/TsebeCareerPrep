@@ -1,4 +1,6 @@
 ﻿
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TsebeCareerPrep.Api.Data;
@@ -7,6 +9,7 @@ using TsebeCareerPrep.Api.Models;
 namespace TsebeCareerPrep.Api.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class InterviewSessionsController : ControllerBase
     {
@@ -18,12 +21,22 @@ namespace TsebeCareerPrep.Api.Controllers
             _context = context;
         }
 
+        private string? GetCurrentUserId()
+        {
+            return User.FindFirstValue(
+                ClaimTypes.NameIdentifier);
+        }
+
         // POST: api/InterviewSessions/start
         [HttpPost("start")]
         public async Task<IActionResult> StartInterview(
             [FromBody] StartInterviewRequest request)
         {
-            // Verify that the selected category exists.
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
             var category = await _context.InterviewCategories
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c =>
@@ -38,19 +51,17 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
-            // Create a new interview session.
             var session = new InterviewSession
             {
                 InterviewCategoryId = category.Id,
+                UserId = userId,
                 StartedAt = DateTime.UtcNow,
                 Status = "InProgress"
             };
 
-            // Save the session to SQL Server.
             _context.InterviewSessions.Add(session);
             await _context.SaveChangesAsync();
 
-            // Return the newly created session.
             return CreatedAtAction(
                 nameof(GetSession),
                 new { id = session.Id },
@@ -68,9 +79,16 @@ namespace TsebeCareerPrep.Api.Controllers
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetSession(int id)
         {
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
             var session = await _context.InterviewSessions
                 .AsNoTracking()
-                .Where(s => s.Id == id)
+                .Where(s =>
+                    s.Id == id &&
+                    s.UserId == userId)
                 .Select(s => new
                 {
                     s.Id,
@@ -93,13 +111,19 @@ namespace TsebeCareerPrep.Api.Controllers
             return Ok(session);
         }
 
-
         // POST: api/InterviewSessions/1/complete
         [HttpPost("{id:int}/complete")]
         public async Task<IActionResult> CompleteInterview(int id)
         {
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
             var session = await _context.InterviewSessions
-                .FirstOrDefaultAsync(s => s.Id == id);
+                .FirstOrDefaultAsync(s =>
+                    s.Id == id &&
+                    s.UserId == userId);
 
             if (session == null)
             {
@@ -126,7 +150,9 @@ namespace TsebeCareerPrep.Api.Controllers
             }
 
             var hasResponses = await _context.InterviewResponses
-                .AnyAsync(r => r.InterviewSessionId == id);
+                .AnyAsync(r =>
+                    r.InterviewSessionId == id &&
+                    r.InterviewSession!.UserId == userId);
 
             if (!hasResponses)
             {
@@ -151,14 +177,20 @@ namespace TsebeCareerPrep.Api.Controllers
             });
         }
 
-
         // GET: api/InterviewSessions/1/results
         [HttpGet("{id:int}/results")]
         public async Task<IActionResult> GetSessionResults(int id)
         {
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
             var session = await _context.InterviewSessions
                 .AsNoTracking()
-                .Where(s => s.Id == id)
+                .Where(s =>
+                    s.Id == id &&
+                    s.UserId == userId)
                 .Select(s => new
                 {
                     s.Id,
@@ -188,13 +220,16 @@ namespace TsebeCareerPrep.Api.Controllers
 
             var responses = await _context.InterviewResponses
                 .AsNoTracking()
-                .Where(r => r.InterviewSessionId == id)
+                .Where(r =>
+                    r.InterviewSessionId == id &&
+                    r.InterviewSession!.UserId == userId)
                 .OrderBy(r => r.SubmittedAt)
                 .Select(r => new
                 {
                     r.Id,
                     r.InterviewQuestionId,
-                    QuestionText = r.InterviewQuestion!.QuestionText,
+                    QuestionText =
+                        r.InterviewQuestion!.QuestionText,
                     DifficultyLevel =
                         r.InterviewQuestion.DifficultyLevel,
                     r.AnswerText,
@@ -212,13 +247,18 @@ namespace TsebeCareerPrep.Api.Controllers
             });
         }
 
-
         // GET: api/InterviewSessions/history
         [HttpGet("history")]
         public async Task<IActionResult> GetInterviewHistory()
         {
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
             var sessions = await _context.InterviewSessions
                 .AsNoTracking()
+                .Where(s => s.UserId == userId)
                 .OrderByDescending(s => s.StartedAt)
                 .Select(s => new
                 {
@@ -229,31 +269,43 @@ namespace TsebeCareerPrep.Api.Controllers
                     s.StartedAt,
                     s.CompletedAt,
                     TotalAnswered = _context.InterviewResponses
-                        .Count(r => r.InterviewSessionId == s.Id)
+                        .Count(r =>
+                            r.InterviewSessionId == s.Id)
                 })
                 .ToListAsync();
 
             return Ok(sessions);
         }
 
-
         // GET: api/InterviewSessions/progress
         [HttpGet("progress")]
         public async Task<IActionResult> GetInterviewProgress()
         {
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
             var totalInterviews =
-                await _context.InterviewSessions.CountAsync();
+                await _context.InterviewSessions
+                    .CountAsync(s => s.UserId == userId);
 
             var completedInterviews =
-                await _context.InterviewSessions.CountAsync(
-                    s => s.Status == "Completed");
+                await _context.InterviewSessions
+                    .CountAsync(s =>
+                        s.UserId == userId &&
+                        s.Status == "Completed");
 
             var inProgressInterviews =
-                await _context.InterviewSessions.CountAsync(
-                    s => s.Status == "InProgress");
+                await _context.InterviewSessions
+                    .CountAsync(s =>
+                        s.UserId == userId &&
+                        s.Status == "InProgress");
 
             var totalAnswers =
-                await _context.InterviewResponses.CountAsync();
+                await _context.InterviewResponses
+                    .CountAsync(r =>
+                        r.InterviewSession!.UserId == userId);
 
             var completionRate = totalInterviews > 0
                 ? Math.Round(
@@ -270,7 +322,5 @@ namespace TsebeCareerPrep.Api.Controllers
                 CompletionRate = completionRate
             });
         }
-
     }
-
 }
