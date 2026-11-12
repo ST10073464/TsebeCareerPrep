@@ -1,57 +1,45 @@
 ﻿@model List<TsebeCareerPrep.Mvc.Services.InterviewCategoryDto>
+@using TsebeCareerPrep.Mvc.Models
 
 @{
     ViewData["Title"] = "Interview Categories";
+
+    var history = ViewBag.InterviewHistory
+        as List<InterviewHistoryViewModel>
+        ?? new List<InterviewHistoryViewModel>();
 }
 
 <section class="interview-categories-page">
 
     <!-- Page introduction -->
-
     <div class="category-page-header">
-
         <div class="category-page-header-content">
-
             <p class="category-eyebrow">
                 INTERVIEW PREPARATION
             </p>
 
-            <h1>
-                Choose Your Interview Category
-            </h1>
+            <h1>Choose Your Interview Category</h1>
 
             <p>
                 Explore interview topics, practise answering
                 questions and build confidence for your next
                 career opportunity.
             </p>
-
         </div>
-
     </div>
 
-
     <!-- Categories content -->
-
     <div class="category-page-content">
 
         <div class="category-section-heading">
-
             <h2>Available Categories</h2>
-
-            <p>
-                Select a category to begin your preparation.
-            </p>
-
+            <p>Select a category to begin your preparation.</p>
         </div>
 
         @if (Model == null || !Model.Any())
         {
-            <div class="alert alert-info"
-                 role="status">
-
+            <div class="alert alert-info" role="status">
                 No interview categories are currently available.
-
             </div>
         }
         else
@@ -60,12 +48,27 @@
 
                 @foreach (var category in Model)
                 {
+                    var categoryHistory = history
+                        .Where(h => h.InterviewCategoryId == category.Id)
+                        .ToList();
+
+                    var hasActiveInterview = categoryHistory.Any(
+                        h => h.Status == "InProgress");
+
+                    var hasCompletedInterview = categoryHistory.Any(
+                        h => h.Status == "Completed");
+
+                    var statusText = hasActiveInterview
+                        ? "In Progress"
+                        : hasCompletedInterview
+                            ? "Completed"
+                            : "Available";
+
                     <div class="col-12 col-md-6">
 
                         <article class="category-card h-100">
 
                             <div class="category-card-top">
-
                                 <div class="category-card-icon"
                                      aria-hidden="true">
                                     <svg viewBox="0 0 24 24"
@@ -83,9 +86,8 @@
                                 </div>
 
                                 <span class="category-status">
-                                    Available
+                                    @statusText
                                 </span>
-
                             </div>
 
                             <h3 class="category-card-title">
@@ -98,33 +100,23 @@
 
                             <div class="category-card-actions">
 
-                                <form asp-controller="InterviewSessions"
-                                      asp-action="Start"
-                                      method="post"
-                                      class="category-start-form">
+                                <!-- Open the dedicated category page.
+                                     Starting or continuing interviews
+                                     happens inside that page. -->
+                                <a asp-controller="InterviewCategories"
+                                   asp-action="Details"
+                                   asp-route-id="@category.Id"
+                                   class="btn btn-primary category-primary-button">
+                                    Open Category
+                                </a>
 
-                                    @Html.AntiForgeryToken()
-
-                                    <input type="hidden"
-                                           name="categoryId"
-                                           value="@category.Id" />
-
-                                    <button type="submit"
-                                            class="btn btn-primary category-primary-button">
-
-                                        Start Interview
-
-                                    </button>
-
-                                </form>
-
+                                <!-- Practice questions remain available
+                                     directly from the category listing. -->
                                 <a asp-controller="InterviewQuestions"
                                    asp-action="Category"
                                    asp-route-id="@category.Id"
                                    class="btn btn-outline-primary category-secondary-button">
-
-                                    Practise Questions
-
+                                    Practice Questions
                                 </a>
 
                             </div>

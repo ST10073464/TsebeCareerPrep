@@ -1,0 +1,171 @@
+﻿@model TsebeCareerPrep.Mvc.Services.InterviewCategoryDto
+@using TsebeCareerPrep.Mvc.Models
+
+@{
+    ViewData["Title"] = Model.Name;
+
+    var history = ViewBag.InterviewHistory
+        as List<InterviewHistoryViewModel>
+        ?? new List<InterviewHistoryViewModel>();
+
+    var activeAttempt = history.FirstOrDefault(
+        h => h.Status == "InProgress");
+
+    var completedAttempts = history
+        .Where(h => h.Status == "Completed")
+        .OrderByDescending(h => h.StartedAt)
+        .ToList();
+}
+
+<section class="container py-5">
+
+    <a asp-controller="InterviewCategories"
+       asp-action="Index"
+       class="btn btn-outline-secondary mb-4">
+        ← Back to Categories
+    </a>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <p class="text-primary fw-semibold mb-2">
+                INTERVIEW PREPARATION
+            </p>
+
+            <h1 class="mb-3">@Model.Name</h1>
+
+            <p class="text-muted">
+                @Model.Description
+            </p>
+
+            <div class="d-flex flex-wrap gap-2 mt-4">
+
+                @if (activeAttempt != null)
+                {
+                    <a asp-controller="InterviewSessions"
+                       asp-action="Options"
+                       asp-route-id="@activeAttempt.Id"
+                       class="btn btn-primary">
+                        Continue Interview
+                    </a>
+                }
+                else if (User.Identity?.IsAuthenticated == true)
+                {
+                    <form asp-controller="InterviewSessions"
+                          asp-action="Start"
+                          method="post">
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden"
+                               name="categoryId"
+                               value="@Model.Id" />
+
+                        <button type="submit"
+                                class="btn btn-primary">
+                            @(history.Any()
+                                ? "Start New Interview"
+                                : "Start Interview")
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <a asp-controller="Account"
+                       asp-action="Login"
+                       class="btn btn-primary">
+                        Sign In to Start
+                    </a>
+                }
+
+                <a asp-controller="InterviewQuestions"
+                   asp-action="Category"
+                   asp-route-id="@Model.Id"
+                   class="btn btn-outline-primary">
+                    Practice Questions
+                </a>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+
+            <h2 class="h4 mb-3">
+                Previous Interview Attempts
+            </h2>
+
+            @if (!history.Any())
+            {
+                <p class="text-muted mb-0">
+                    You have not started an interview
+                    in this category yet.
+                </p>
+            }
+            else
+            {
+                @foreach (var attempt in history)
+                {
+                    var duration = TimeSpan.FromSeconds(
+                        Math.Max(0L, attempt.ActiveDurationSeconds));
+
+                    var durationText =
+                        $"{(long)duration.TotalHours:00}:" +
+                        $"{duration.Minutes:00}:" +
+                        $"{duration.Seconds:00}";
+
+                    <div class="border rounded p-3 mb-3">
+
+                        <div class="d-flex justify-content-between
+                            align-items-center gap-2">
+
+                            <strong>
+                                Session #@attempt.Id
+                            </strong>
+
+                            <span class="badge @(attempt.Status == "Completed"
+                                  ? "bg-success"
+                                  : attempt.Status == "InProgress"
+                                    ? "bg-warning text-dark"
+                                    : "bg-secondary")">
+                                @attempt.Status
+                            </span>
+
+                        </div>
+
+                        <p class="text-muted small mt-2 mb-2">
+                            Started (UTC):
+                            @attempt.StartedAt.ToString("dd MMM yyyy HH:mm")
+                            <br />
+                            Answers submitted: @attempt.TotalAnswered
+                            <br />
+                            Recorded duration: @durationText
+                        </p>
+
+                        @if (attempt.Status == "Completed")
+                        {
+                            <a asp-controller="InterviewSessions"
+                               asp-action="Results"
+                               asp-route-id="@attempt.Id"
+                               class="btn btn-sm btn-outline-success">
+                                View Results
+                            </a>
+                        }
+                        else if (attempt.Status == "InProgress")
+                        {
+                            <a asp-controller="InterviewSessions"
+                               asp-action="Options"
+                               asp-route-id="@attempt.Id"
+                               class="btn btn-sm btn-outline-primary">
+                                Interview Options
+                            </a>
+                        }
+
+                    </div>
+                }
+            }
+
+        </div>
+    </div>
+
+</section>
