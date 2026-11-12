@@ -106,13 +106,8 @@
             {
                 @foreach (var attempt in history)
                 {
-                    var duration = TimeSpan.FromSeconds(
-                        Math.Max(0L, attempt.ActiveDurationSeconds));
+                    
 
-                    var durationText =
-                        $"{(long)duration.TotalHours:00}:" +
-                        $"{duration.Minutes:00}:" +
-                        $"{duration.Seconds:00}";
 
                     <div class="border rounded p-3 mb-3">
 
@@ -138,8 +133,7 @@
                             @attempt.StartedAt.ToString("dd MMM yyyy HH:mm")
                             <br />
                             Answers submitted: @attempt.TotalAnswered
-                            <br />
-                            Recorded duration: @durationText
+                           
                         </p>
 
                         @if (attempt.Status == "Completed")
