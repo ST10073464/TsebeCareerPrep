@@ -241,6 +241,11 @@ namespace TsebeCareerPrep.Api.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("AssessmentStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<string>("ImprovementGuidance")
                         .IsRequired()
                         .HasMaxLength(2000)
@@ -248,6 +253,16 @@ namespace TsebeCareerPrep.Api.Migrations
 
                     b.Property<int>("InterviewResponseId")
                         .HasColumnType("int");
+
+                    b.Property<int?>("ProvisionalScore")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("Score")
                         .HasColumnType("int");

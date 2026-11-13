@@ -111,6 +111,26 @@ builder.Services.AddScoped<
     IInterviewAssessmentService,
     InterviewAssessmentService>();
 
+// Use Google Gemini for provisional AI assessments.
+builder.Services.AddScoped<
+    IAiInterviewAssessmentService,
+    GeminiInterviewAssessmentService>();
+
+
+builder.Services.AddHttpClient("OpenAI", client =>
+{
+    var baseUrl = builder.Configuration["OpenAI:BaseUrl"]
+        ?? "https://api.openai.com/v1";
+
+    var timeoutSeconds = builder.Configuration
+        .GetValue<int?>("OpenAI:TimeoutSeconds") ?? 30;
+
+    client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
+    client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
+});
+
+
+
 
 var app = builder.Build();
 
