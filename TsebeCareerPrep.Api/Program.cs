@@ -114,6 +114,31 @@ builder.Services.AddScoped<
 
 var app = builder.Build();
 
+// Ensure the Administrator role exists.
+// This does not assign the role to any user.
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider
+        .GetRequiredService<RoleManager<IdentityRole>>();
+
+    const string administratorRole = "Administrator";
+
+    if (!await roleManager.RoleExistsAsync(administratorRole))
+    {
+        var result = await roleManager.CreateAsync(
+            new IdentityRole(administratorRole));
+
+        if (!result.Succeeded)
+        {
+            throw new InvalidOperationException(
+                "Unable to create the Administrator role: " +
+                string.Join("; ",
+                    result.Errors.Select(e => e.Description)));
+        }
+    }
+}
+
+
 // Preserve existing development database seeding.
 if (app.Environment.IsDevelopment())
 {

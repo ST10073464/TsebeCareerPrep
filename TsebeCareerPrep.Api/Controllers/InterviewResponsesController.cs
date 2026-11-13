@@ -1,5 +1,7 @@
-﻿
+﻿using System;
+using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,16 +17,14 @@ namespace TsebeCareerPrep.Api.Controllers
     {
         private readonly ApplicationDbContext _context;
 
-        public InterviewResponsesController(
-            ApplicationDbContext context)
+        public InterviewResponsesController(ApplicationDbContext context)
         {
             _context = context;
         }
 
         private string? GetCurrentUserId()
         {
-            return User.FindFirstValue(
-                ClaimTypes.NameIdentifier);
+            return User.FindFirstValue(ClaimTypes.NameIdentifier);
         }
 
         // POST: api/InterviewResponses/submit
@@ -33,12 +33,9 @@ namespace TsebeCareerPrep.Api.Controllers
             [FromBody] SubmitInterviewResponseRequest request)
         {
             var userId = GetCurrentUserId();
-
             if (string.IsNullOrWhiteSpace(userId))
                 return Unauthorized();
 
-            // Find the session only if it belongs
-            // to the authenticated user.
             var session = await _context.InterviewSessions
                 .FirstOrDefaultAsync(s =>
                     s.Id == request.InterviewSessionId &&
@@ -60,16 +57,35 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
-            // Validate the question and its category.
-            var question = await _context.InterviewQuestions
+            // New sessions have an immutable assignment list. Only questions
+            // assigned to this session may be answered, even if the source
+            // question has since been deactivated or edited.
+            var hasSnapshots = await _context.InterviewSessionQuestions
                 .AsNoTracking()
-                .FirstOrDefaultAsync(q =>
-                    q.Id == request.InterviewQuestionId &&
-                    q.InterviewCategoryId ==
-                        session.InterviewCategoryId &&
-                    q.IsActive);
+                .AnyAsync(sq => sq.InterviewSessionId == session.Id);
 
-            if (question == null)
+            bool validQuestion;
+            if (hasSnapshots)
+            {
+                validQuestion = await _context.InterviewSessionQuestions
+                    .AsNoTracking()
+                    .AnyAsync(sq =>
+                        sq.InterviewSessionId == session.Id &&
+                        sq.InterviewQuestionId == request.InterviewQuestionId);
+            }
+            else
+            {
+                // Legacy sessions created before snapshot support retain
+                // their previous active-question validation behaviour.
+                validQuestion = await _context.InterviewQuestions
+                    .AsNoTracking()
+                    .AnyAsync(q =>
+                        q.Id == request.InterviewQuestionId &&
+                        q.InterviewCategoryId == session.InterviewCategoryId &&
+                        q.IsActive);
+            }
+
+            if (!validQuestion)
             {
                 return BadRequest(new
                 {
@@ -77,11 +93,10 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
-            // Prevent duplicate answers.
             var alreadyAnswered = await _context.InterviewResponses
                 .AnyAsync(r =>
                     r.InterviewSessionId == session.Id &&
-                    r.InterviewQuestionId == question.Id);
+                    r.InterviewQuestionId == request.InterviewQuestionId);
 
             if (alreadyAnswered)
             {
@@ -91,7 +106,6 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
-            // Validate the submitted answer.
             if (string.IsNullOrWhiteSpace(request.AnswerText))
             {
                 return BadRequest(new
@@ -103,7 +117,7 @@ namespace TsebeCareerPrep.Api.Controllers
             var response = new InterviewResponse
             {
                 InterviewSessionId = session.Id,
-                InterviewQuestionId = question.Id,
+                InterviewQuestionId = request.InterviewQuestionId,
                 AnswerText = request.AnswerText.Trim(),
                 SubmittedAt = DateTime.UtcNow
             };
@@ -128,7 +142,6 @@ namespace TsebeCareerPrep.Api.Controllers
         public async Task<IActionResult> GetResponse(int id)
         {
             var userId = GetCurrentUserId();
-
             if (string.IsNullOrWhiteSpace(userId))
                 return Unauthorized();
 
@@ -148,40 +161,29 @@ namespace TsebeCareerPrep.Api.Controllers
                 .FirstOrDefaultAsync();
 
             if (response == null)
-            {
                 return NotFound();
-            }
 
             return Ok(response);
         }
 
         // GET: api/InterviewResponses/session/3
         [HttpGet("session/{sessionId:int}")]
-        public async Task<IActionResult> GetSessionResponses(
-            int sessionId)
+        public async Task<IActionResult> GetSessionResponses(int sessionId)
         {
             var userId = GetCurrentUserId();
-
             if (string.IsNullOrWhiteSpace(userId))
                 return Unauthorized();
 
             if (sessionId <= 0)
-            {
-                return BadRequest(
-                    "Invalid interview session ID.");
-            }
+                return BadRequest("Invalid interview session ID.");
 
-            // Check ownership before retrieving responses.
             var sessionExists = await _context.InterviewSessions
                 .AnyAsync(s =>
                     s.Id == sessionId &&
                     s.UserId == userId);
 
             if (!sessionExists)
-            {
-                return NotFound(
-                    "Interview session not found.");
-            }
+                return NotFound("Interview session not found.");
 
             var responses = await _context.InterviewResponses
                 .AsNoTracking()

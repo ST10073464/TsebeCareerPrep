@@ -457,6 +457,53 @@ namespace TsebeCareerPrep.Api.Migrations
                     b.ToTable("InterviewSessions");
                 });
 
+            modelBuilder.Entity("TsebeCareerPrep.Api.Models.InterviewSessionQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AssignedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DifficultyLevel")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InterviewQuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InterviewSessionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("QuestionText")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("SuggestedAnswer")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InterviewQuestionId");
+
+                    b.HasIndex("InterviewSessionId", "DisplayOrder")
+                        .IsUnique();
+
+                    b.HasIndex("InterviewSessionId", "InterviewQuestionId")
+                        .IsUnique();
+
+                    b.ToTable("InterviewSessionQuestions");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -577,6 +624,25 @@ namespace TsebeCareerPrep.Api.Migrations
                     b.Navigation("InterviewCategory");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("TsebeCareerPrep.Api.Models.InterviewSessionQuestion", b =>
+                {
+                    b.HasOne("TsebeCareerPrep.Api.Models.InterviewQuestion", "InterviewQuestion")
+                        .WithMany()
+                        .HasForeignKey("InterviewQuestionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TsebeCareerPrep.Api.Models.InterviewSession", "InterviewSession")
+                        .WithMany()
+                        .HasForeignKey("InterviewSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("InterviewQuestion");
+
+                    b.Navigation("InterviewSession");
                 });
 
             modelBuilder.Entity("TsebeCareerPrep.Api.Models.InterviewSession", b =>

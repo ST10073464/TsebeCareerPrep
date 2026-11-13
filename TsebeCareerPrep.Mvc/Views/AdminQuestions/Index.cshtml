@@ -1,0 +1,159 @@
+﻿@model List<TsebeCareerPrep.Mvc.Models.InterviewQuestionViewModel>
+
+@{
+    ViewData["Title"] = "Manage Interview Questions";
+}
+
+<div class="container py-5">
+
+    <!-- PAGE HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h1 class="fw-bold">Manage Interview Questions</h1>
+
+            <p class="text-muted mb-0">
+                View and manage the interview question bank.
+            </p>
+        </div>
+
+        <a asp-controller="Admin"
+           asp-action="Index"
+           class="btn btn-outline-secondary">
+            Back to Dashboard
+        </a>
+    </div>
+
+    <!-- SUCCESS NOTIFICATION -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success" role="alert">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <!-- QUESTION BANK -->
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+
+            <!-- QUESTION BANK HEADER -->
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+
+                <div>
+                    <h4 class="fw-bold mb-1">Question Bank</h4>
+
+                    <span class="badge bg-primary">
+                        @Model.Count Questions
+                    </span>
+                </div>
+
+                <a asp-controller="AdminQuestions"
+                   asp-action="Create"
+                   class="btn btn-primary">
+                    + Create Question
+                </a>
+
+            </div>
+
+            <!-- QUESTION TABLE -->
+            @if (Model.Count == 0)
+            {
+                <div class="alert alert-info">
+                    No interview questions have been created yet.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle">
+
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Question</th>
+                                <th>Category ID</th>
+                                <th>Difficulty</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var question in Model
+                                .OrderBy(q => q.InterviewCategoryId)
+                                .ThenBy(q => q.Id))
+                            {
+                                <tr>
+
+                                    <!-- QUESTION ID -->
+                                    <td>
+                                        @question.Id
+                                    </td>
+
+                                    <!-- QUESTION AND SUGGESTED ANSWER -->
+                                    <td>
+                                        <div class="fw-semibold">
+                                            @question.QuestionText
+                                        </div>
+
+                                        @if (!string.IsNullOrWhiteSpace(
+                                            question.SuggestedAnswer))
+                                        {
+                                            <div class="text-muted small mt-1">
+                                                <strong>Suggested answer:</strong>
+                                                @question.SuggestedAnswer
+                                            </div>
+                                        }
+                                    </td>
+
+                                    <!-- CATEGORY -->
+                                    <td>
+                                        @question.InterviewCategoryId
+                                    </td>
+
+                                    <!-- DIFFICULTY -->
+                                    <td>
+                                        <span class="badge bg-secondary">
+                                            @question.DifficultyLevel
+                                        </span>
+                                    </td>
+
+                                    <!-- STATUS -->
+                                    <td>
+                                        @if (question.IsActive)
+                                        {
+                                            <span class="badge bg-success">
+                                                Active
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">
+                                                Inactive
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <!-- ACTIONS -->
+                                    <td>
+                                        <a asp-controller="AdminQuestions"
+                                           asp-action="Edit"
+                                           asp-route-id="@question.Id"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Edit
+                                        </a>
+                                    </td>
+
+                                </tr>
+                            }
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+
+        </div>
+    </div>
+
+</div>

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TsebeCareerPrep.Api.Data;
 using TsebeCareerPrep.Api.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace TsebeCareerPrep.Api.Controllers
 {
@@ -44,5 +45,94 @@ namespace TsebeCareerPrep.Api.Controllers
 
             return Ok(category);
         }
+
+
+        // =====================================================
+        // GET: api/InterviewCategories/admin/all
+        // Administrator: View active and inactive categories.
+        // =====================================================
+        [HttpGet("admin/all")]
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> GetAllCategoriesAdmin()
+        {
+            var categories = await _context.InterviewCategories
+                .AsNoTracking()
+                .OrderBy(c => c.Id)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Name,
+                    c.Description,
+                    c.IsActive
+                })
+                .ToListAsync();
+
+            return Ok(categories);
+        }
+
+
+        // =====================================================
+        // POST: api/InterviewCategories/admin
+        // Administrator: Create a new interview category.
+        // =====================================================
+        [HttpPost("admin")]
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> CreateCategoryAdmin(
+            [FromBody] CreateInterviewCategoryRequest request)
+        {
+            var name = request.Name.Trim();
+            var description = request.Description.Trim();
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return BadRequest(new
+                {
+                    message = "Category name is required."
+                });
+            }
+
+            if (string.IsNullOrWhiteSpace(description))
+            {
+                return BadRequest(new
+                {
+                    message = "Category description is required."
+                });
+            }
+
+            // Prevent duplicate category names.
+            var categoryExists = await _context.InterviewCategories
+                .AnyAsync(c => c.Name.ToLower() == name.ToLower());
+
+            if (categoryExists)
+            {
+                return Conflict(new
+                {
+                    message = "An interview category with this name already exists."
+                });
+            }
+
+            var category = new InterviewCategory
+            {
+                Name = name,
+                Description = description,
+                IsActive = request.IsActive
+            };
+
+            _context.InterviewCategories.Add(category);
+
+            await _context.SaveChangesAsync();
+
+            return StatusCode(
+                StatusCodes.Status201Created,
+                new
+                {
+                    category.Id,
+                    category.Name,
+                    category.Description,
+                    category.IsActive
+                });
+        }
+
+
     }
 }

@@ -284,27 +284,26 @@ namespace TsebeCareerPrep.Mvc.Controllers
                     "This interview session is not active.");
             }
 
-            // Retrieve the selected interview question.
-            var questionResponse = await client.GetAsync(
-                $"api/InterviewQuestions/{questionId}");
+            // Retrieve the question assigned to this particular session.
+            // The snapshot remains available even if an administrator
+            // later edits or deactivates the original question.
+            var questionsResponse = await client.GetAsync(
+                $"api/InterviewSessions/{sessionId}/questions");
 
-            if (questionResponse.StatusCode == HttpStatusCode.NotFound)
-            {
-                return NotFound(
-                    "Interview question not found.");
-            }
+            if (questionsResponse.StatusCode == HttpStatusCode.NotFound)
+                return NotFound("Interview session not found.");
 
-            questionResponse.EnsureSuccessStatusCode();
+            questionsResponse.EnsureSuccessStatusCode();
 
-            var question = await questionResponse.Content
-                .ReadFromJsonAsync<InterviewAnswerQuestionDto>();
+            var assignedQuestions = await questionsResponse.Content
+                .ReadFromJsonAsync<List<InterviewAnswerQuestionDto>>()
+                ?? new List<InterviewAnswerQuestionDto>();
+
+            var question = assignedQuestions
+                .FirstOrDefault(q => q.Id == questionId);
 
             if (question == null)
-            {
-                return StatusCode(
-                    502,
-                    "Invalid question response.");
-            }
+                return NotFound("Question is not assigned to this interview session.");
 
             // Ensure the question belongs to this category.
             if (question.InterviewCategoryId !=
@@ -404,14 +403,16 @@ namespace TsebeCareerPrep.Mvc.Controllers
             var client = _httpClientFactory.CreateClient("AuthenticatedInterviewApi");
 
             var response = await client.GetAsync(
-                $"api/InterviewQuestions/{model.InterviewQuestionId}");
+                $"api/InterviewSessions/{model.InterviewSessionId}/questions");
 
             if (response.IsSuccessStatusCode)
             {
-                var question = await response.Content
-                    .ReadFromJsonAsync<InterviewAnswerQuestionDto>();
+                var questions = await response.Content
+                    .ReadFromJsonAsync<List<InterviewAnswerQuestionDto>>();
 
-                model.QuestionText = question?.QuestionText ?? string.Empty;
+                model.QuestionText = questions?
+                    .FirstOrDefault(q => q.Id == model.InterviewQuestionId)?
+                    .QuestionText ?? string.Empty;
             }
 
             return View("Answer", model);
@@ -462,9 +463,10 @@ namespace TsebeCareerPrep.Mvc.Controllers
                     "Invalid session response.");
             }
 
-            // Retrieve questions for this session's category.
+            // Retrieve this session's frozen question set rather than
+            // the live category question bank.
             var questionsResponse = await client.GetAsync(
-                $"api/InterviewQuestions/category/{session.InterviewCategoryId}");
+                $"api/InterviewSessions/{id}/questions");
 
             questionsResponse.EnsureSuccessStatusCode();
 

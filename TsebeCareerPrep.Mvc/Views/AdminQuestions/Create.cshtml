@@ -1,0 +1,139 @@
+﻿@model TsebeCareerPrep.Mvc.Models.CreateInterviewQuestionViewModel
+
+@{
+    ViewData["Title"] = "Create Interview Question";
+}
+
+<div class="container py-5">
+
+    <div class="mb-4">
+        <a asp-controller="AdminQuestions"
+           asp-action="Index"
+           class="btn btn-outline-secondary mb-3">
+            Back to Question Bank
+        </a>
+
+        <h1 class="fw-bold">Create Interview Question</h1>
+
+        <p class="text-muted">
+            Add a new question to the interview question bank.
+        </p>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+
+            <form asp-controller="AdminQuestions"
+                  asp-action="Create"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="InterviewCategoryId"
+                           class="form-label fw-semibold">
+                    </label>
+
+                    <select asp-for="InterviewCategoryId"
+                            class="form-select">
+                        <option value="0">
+                            Select an interview category
+                        </option>
+                        <option value="1">
+                            Software Development
+                        </option>
+                        <option value="2">
+                            Administration
+                        </option>
+                        <option value="4">
+                            Management
+                        </option>
+                        <option value="6">
+                            Finance
+                        </option>
+                    </select>
+
+                    <span asp-validation-for="InterviewCategoryId"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="QuestionText"
+                           class="form-label fw-semibold">
+                    </label>
+
+                    <textarea asp-for="QuestionText"
+                              class="form-control"
+                              rows="4"
+                              maxlength="1000"
+                              placeholder="Enter the interview question"></textarea>
+
+                    <span asp-validation-for="QuestionText"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="SuggestedAnswer"
+                           class="form-label fw-semibold">
+                    </label>
+
+                    <textarea asp-for="SuggestedAnswer"
+                              class="form-control"
+                              rows="5"
+                              maxlength="2000"
+                              placeholder="Enter a suggested answer"></textarea>
+
+                    <span asp-validation-for="SuggestedAnswer"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="DifficultyLevel"
+                           class="form-label fw-semibold">
+                    </label>
+
+                    <select asp-for="DifficultyLevel"
+                            class="form-select">
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                    </select>
+
+                    <span asp-validation-for="DifficultyLevel"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="form-check mb-4">
+                    <input asp-for="IsActive"
+                           class="form-check-input" />
+
+                    <label asp-for="IsActive"
+                           class="form-check-label fw-semibold">
+                    </label>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="submit"
+                            class="btn btn-primary">
+                        Create Question
+                    </button>
+
+                    <a asp-controller="AdminQuestions"
+                       asp-action="Index"
+                       class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

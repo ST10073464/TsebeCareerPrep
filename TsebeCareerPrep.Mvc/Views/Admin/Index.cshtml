@@ -1,0 +1,63 @@
+﻿@{
+    ViewData["Title"] = "Administrator Dashboard";
+}
+
+<div class="container py-5">
+
+    <div class="mb-4">
+        <h1 class="fw-bold">Administrator Dashboard</h1>
+
+        <p class="text-muted">
+            Manage interview preparation content
+            and platform administration.
+        </p>
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body p-4">
+
+                    <h4 class="fw-bold">
+                        Interview Questions
+                    </h4>
+
+                    <p class="text-muted">
+                        Create, edit, activate and deactivate
+                        interview questions.
+                    </p>
+
+                    <a asp-controller="AdminQuestions"
+                       asp-action="Index"
+                       class="btn btn-primary">
+                        Manage Questions
+                    </a>
+
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body p-4">
+
+                    <h4 class="fw-bold">
+                        Interview Categories
+                    </h4>
+
+                    <p class="text-muted">
+                        View and manage interview categories.
+                    </p>
+
+                    <span class="badge bg-secondary">
+                        Coming Soon
+                    </span>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

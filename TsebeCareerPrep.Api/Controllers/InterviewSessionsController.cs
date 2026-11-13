@@ -1,5 +1,6 @@
 ﻿
 using System.Security.Claims;
+using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -57,16 +58,113 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
+            // Reuse an existing interview instead of violating the
+            // unique active-session index for this user and category.
+            var existingSession = await _context.InterviewSessions
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s =>
+                    s.UserId == userId &&
+                    s.InterviewCategoryId == category.Id &&
+                    s.Status == "InProgress");
+
+            if (existingSession != null)
+            {
+                return Ok(new
+                {
+                    existingSession.Id,
+                    existingSession.InterviewCategoryId,
+                    CategoryName = category.Name,
+                    existingSession.StartedAt,
+                    existingSession.Status,
+                    IsExistingSession = true,
+                    message = "Continue your existing interview."
+                });
+            }
+
+            // Freeze the active question set for new sessions only.
+            var questions = await _context.InterviewQuestions
+                .AsNoTracking()
+                .Where(q =>
+                    q.InterviewCategoryId == category.Id &&
+                    q.IsActive)
+                .OrderBy(q => q.Id)
+                .ToListAsync();
+
+            if (questions.Count == 0)
+            {
+                return BadRequest(new
+                {
+                    message = "This interview category has no active questions."
+                });
+            }
+
+            var assignedAtUtc = DateTime.UtcNow;
             var session = new InterviewSession
             {
                 InterviewCategoryId = category.Id,
                 UserId = userId,
-                StartedAt = DateTime.UtcNow,
+                StartedAt = assignedAtUtc,
                 Status = "InProgress"
             };
 
-            _context.InterviewSessions.Add(session);
-            await _context.SaveChangesAsync();
+            // Save the session and snapshots atomically.
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                _context.InterviewSessions.Add(session);
+                await _context.SaveChangesAsync();
+
+                var snapshots = questions
+                    .Select((question, index) =>
+                        new InterviewSessionQuestion
+                        {
+                            InterviewSessionId = session.Id,
+                            InterviewQuestionId = question.Id,
+                            QuestionText = question.QuestionText,
+                            SuggestedAnswer = question.SuggestedAnswer,
+                            DifficultyLevel = question.DifficultyLevel,
+                            DisplayOrder = index + 1,
+                            AssignedAtUtc = assignedAtUtc
+                        })
+                    .ToList();
+
+                _context.InterviewSessionQuestions.AddRange(snapshots);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (DbUpdateException ex) when (
+                ex.InnerException is SqlException sqlException &&
+                (sqlException.Number == 2601 || sqlException.Number == 2627))
+            {
+                // Another request may have started the same interview
+                // after the initial existence check. Roll back before
+                // looking up the session created by that request.
+                await transaction.RollbackAsync();
+                _context.ChangeTracker.Clear();
+
+                var concurrentSession = await _context.InterviewSessions
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s =>
+                        s.UserId == userId &&
+                        s.InterviewCategoryId == category.Id &&
+                        s.Status == "InProgress");
+
+                if (concurrentSession == null)
+                    throw;
+
+                return Ok(new
+                {
+                    concurrentSession.Id,
+                    concurrentSession.InterviewCategoryId,
+                    CategoryName = category.Name,
+                    concurrentSession.StartedAt,
+                    concurrentSession.Status,
+                    IsExistingSession = true,
+                    message = "Continue your existing interview."
+                });
+            }
 
             return CreatedAtAction(
                 nameof(GetSession),
@@ -77,7 +175,8 @@ namespace TsebeCareerPrep.Api.Controllers
                     session.InterviewCategoryId,
                     CategoryName = category.Name,
                     session.StartedAt,
-                    session.Status
+                    session.Status,
+                    IsExistingSession = false
                 });
         }
 
@@ -139,6 +238,79 @@ namespace TsebeCareerPrep.Api.Controllers
                 session.ActiveDurationSeconds,
                 session.TimerStartedAtUtc
             });
+        }
+
+
+        // GET: api/InterviewSessions/53/questions
+        // Return the questions assigned to this user's interview.
+        // Do not expose suggested answers during an interview.
+        [HttpGet("{id:int}/questions")]
+        public async Task<IActionResult> GetSessionQuestions(int id)
+        {
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            if (id <= 0)
+                return BadRequest(new
+                {
+                    message = "Invalid interview session ID."
+                });
+
+            var session = await _context.InterviewSessions
+                .AsNoTracking()
+                .Where(s => s.Id == id && s.UserId == userId)
+                .Select(s => new
+                {
+                    s.Id,
+                    s.InterviewCategoryId
+                })
+                .FirstOrDefaultAsync();
+
+            if (session == null)
+                return NotFound(new
+                {
+                    message = "Interview session not found."
+                });
+
+            // Snapshots freeze the question set, including questions that
+            // an administrator later edits or deactivates.
+            var assignedQuestions = await _context.InterviewSessionQuestions
+                .AsNoTracking()
+                .Where(sq => sq.InterviewSessionId == session.Id)
+                .OrderBy(sq => sq.DisplayOrder)
+                .Select(sq => new
+                {
+                    Id = sq.InterviewQuestionId,
+                    InterviewCategoryId = session.InterviewCategoryId,
+                    sq.QuestionText,
+                    sq.DifficultyLevel,
+                    sq.DisplayOrder
+                })
+                .ToListAsync();
+
+            if (assignedQuestions.Count > 0)
+                return Ok(assignedQuestions);
+
+            // Backward compatibility: sessions created before snapshots
+            // existed still use the active questions in their category.
+            var legacyQuestions = await _context.InterviewQuestions
+                .AsNoTracking()
+                .Where(q =>
+                    q.InterviewCategoryId == session.InterviewCategoryId &&
+                    q.IsActive)
+                .OrderBy(q => q.Id)
+                .Select(q => new
+                {
+                    q.Id,
+                    q.InterviewCategoryId,
+                    q.QuestionText,
+                    q.DifficultyLevel
+                })
+                .ToListAsync();
+
+            return Ok(legacyQuestions);
         }
 
 
@@ -485,21 +657,46 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
-            var totalQuestions = await _context.InterviewQuestions
-                .CountAsync(q =>
-                    q.InterviewCategoryId == session.InterviewCategoryId &&
-                    q.IsActive);
+            // Use the frozen question set for sessions with snapshots.
+            // Legacy sessions continue to use their original active-question logic.
+            var hasSnapshots = await _context.InterviewSessionQuestions
+                .AnyAsync(sq => sq.InterviewSessionId == id);
 
-            var answeredQuestions = await _context.InterviewResponses
-                .Where(r =>
-                    r.InterviewSessionId == id &&
-                    r.InterviewQuestion != null &&
-                    r.InterviewQuestion.InterviewCategoryId ==
-                        session.InterviewCategoryId &&
-                    r.InterviewQuestion.IsActive)
-                .Select(r => r.InterviewQuestionId)
-                .Distinct()
-                .CountAsync();
+            int totalQuestions;
+            int answeredQuestions;
+
+            if (hasSnapshots)
+            {
+                totalQuestions = await _context.InterviewSessionQuestions
+                    .CountAsync(sq => sq.InterviewSessionId == id);
+
+                answeredQuestions = await _context.InterviewResponses
+                    .Where(r => r.InterviewSessionId == id &&
+                        _context.InterviewSessionQuestions.Any(sq =>
+                            sq.InterviewSessionId == id &&
+                            sq.InterviewQuestionId == r.InterviewQuestionId))
+                    .Select(r => r.InterviewQuestionId)
+                    .Distinct()
+                    .CountAsync();
+            }
+            else
+            {
+                totalQuestions = await _context.InterviewQuestions
+                    .CountAsync(q =>
+                        q.InterviewCategoryId == session.InterviewCategoryId &&
+                        q.IsActive);
+
+                answeredQuestions = await _context.InterviewResponses
+                    .Where(r =>
+                        r.InterviewSessionId == id &&
+                        r.InterviewQuestion != null &&
+                        r.InterviewQuestion.InterviewCategoryId ==
+                            session.InterviewCategoryId &&
+                        r.InterviewQuestion.IsActive)
+                    .Select(r => r.InterviewQuestionId)
+                    .Distinct()
+                    .CountAsync();
+            }
 
             if (totalQuestions == 0 ||
                 answeredQuestions >= totalQuestions)
@@ -571,6 +768,24 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
+            // Read assigned question snapshots for this session. Older
+            // sessions have no snapshots and retain the legacy behaviour.
+            var snapshots = await _context.InterviewSessionQuestions
+                .AsNoTracking()
+                .Where(sq => sq.InterviewSessionId == id)
+                .OrderBy(sq => sq.DisplayOrder)
+                .Select(sq => new
+                {
+                    sq.InterviewQuestionId,
+                    sq.QuestionText,
+                    sq.DifficultyLevel,
+                    sq.SuggestedAnswer
+                })
+                .ToListAsync();
+
+            var snapshotsByQuestionId = snapshots.ToDictionary(
+                sq => sq.InterviewQuestionId);
+
             var responses = await _context.InterviewResponses
                 .AsNoTracking()
                 .Where(r =>
@@ -581,32 +796,38 @@ namespace TsebeCareerPrep.Api.Controllers
                 {
                     r.Id,
                     r.InterviewQuestionId,
-                    QuestionText =
-                        r.InterviewQuestion!.QuestionText,
-                    DifficultyLevel =
-                        r.InterviewQuestion.DifficultyLevel,
+                    QuestionText = r.InterviewQuestion!.QuestionText,
+                    DifficultyLevel = r.InterviewQuestion.DifficultyLevel,
                     r.AnswerText,
-                    SuggestedAnswer =
-                        r.InterviewQuestion.SuggestedAnswer,
+                    SuggestedAnswer = r.InterviewQuestion.SuggestedAnswer,
                     r.SubmittedAt
                 })
                 .ToListAsync();
 
-            var questions = await _context.InterviewQuestions
-                .AsNoTracking()
-                .Where(q =>
-                    q.InterviewCategoryId ==
-                        session.InterviewCategoryId &&
-                    q.IsActive)
-                .OrderBy(q => q.Id)
-                .Select(q => new
+            // Keep the exact existing question response structure.
+            // For snapshot sessions, do not filter out deactivated questions.
+            var questions = snapshots.Count > 0
+                ? snapshots.Select(sq => new
                 {
-                    q.Id,
-                    q.QuestionText,
-                    q.DifficultyLevel,
-                    q.SuggestedAnswer
-                })
-                .ToListAsync();
+                    Id = sq.InterviewQuestionId,
+                    sq.QuestionText,
+                    sq.DifficultyLevel,
+                    sq.SuggestedAnswer
+                }).ToList()
+                : await _context.InterviewQuestions
+                    .AsNoTracking()
+                    .Where(q =>
+                        q.InterviewCategoryId == session.InterviewCategoryId &&
+                        q.IsActive)
+                    .OrderBy(q => q.Id)
+                    .Select(q => new
+                    {
+                        q.Id,
+                        q.QuestionText,
+                        q.DifficultyLevel,
+                        q.SuggestedAnswer
+                    })
+                    .ToListAsync();
 
             // Retrieve feedback only for responses belonging
             // to this authenticated user's completed session.
@@ -629,21 +850,29 @@ namespace TsebeCareerPrep.Api.Controllers
             // Preserve existing response properties and add
             // optional assessment feedback.
             var responsesWithFeedback = responses
-                .Select(r => new
+                .Select(r =>
                 {
-                    r.Id,
-                    r.InterviewQuestionId,
-                    r.QuestionText,
-                    r.DifficultyLevel,
-                    r.AnswerText,
-                    r.SuggestedAnswer,
-                    r.SubmittedAt,
-                    AssessmentFeedback =
-                        feedbackByResponseId.TryGetValue(
-                            r.Id,
-                            out var feedback)
-                            ? feedback
-                            : null
+                    var hasSnapshot = snapshotsByQuestionId.TryGetValue(
+                        r.InterviewQuestionId, out var snapshot);
+
+                    return new
+                    {
+                        r.Id,
+                        r.InterviewQuestionId,
+                        QuestionText = hasSnapshot
+                            ? snapshot!.QuestionText : r.QuestionText,
+                        DifficultyLevel = hasSnapshot
+                            ? snapshot!.DifficultyLevel : r.DifficultyLevel,
+                        r.AnswerText,
+                        SuggestedAnswer = hasSnapshot
+                            ? snapshot!.SuggestedAnswer : r.SuggestedAnswer,
+                        r.SubmittedAt,
+                        AssessmentFeedback =
+                            feedbackByResponseId.TryGetValue(
+                                r.Id, out var feedback)
+                                ? feedback
+                                : null
+                    };
                 })
                 .ToList();
 

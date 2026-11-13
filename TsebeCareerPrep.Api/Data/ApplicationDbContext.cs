@@ -1,5 +1,4 @@
 ﻿
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TsebeCareerPrep.Api.Models;
@@ -28,20 +27,24 @@ namespace TsebeCareerPrep.Api.Data
 
         public DbSet<InterviewAssessment> InterviewAssessments
             => Set<InterviewAssessment>();
+
         public DbSet<InterviewQuestionRubric> InterviewQuestionRubrics
             => Set<InterviewQuestionRubric>();
+
+        // Stores the questions assigned to each interview session.
+        // Question content is preserved independently of later edits.
+        public DbSet<InterviewSessionQuestion> InterviewSessionQuestions
+            => Set<InterviewSessionQuestion>();
 
         protected override void OnModelCreating(
             ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-
-            // Protect InterviewSession updates from concurrent writes.
+            // Protect interview session updates from concurrent writes.
             modelBuilder.Entity<InterviewSession>()
                 .Property(s => s.RowVersion)
                 .IsRowVersion();
-
 
             // InterviewCategory -> InterviewQuestion
             modelBuilder.Entity<InterviewQuestion>()
@@ -89,7 +92,6 @@ namespace TsebeCareerPrep.Api.Data
                     a => a.InterviewResponseId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-
             // InterviewQuestion -> InterviewQuestionRubric
             // Each interview question can have one marking rubric.
             modelBuilder.Entity<InterviewQuestionRubric>()
@@ -99,6 +101,40 @@ namespace TsebeCareerPrep.Api.Data
                     r => r.InterviewQuestionId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // InterviewSession -> InterviewSessionQuestion
+            // Deleting a session removes its assigned snapshots.
+            modelBuilder.Entity<InterviewSessionQuestion>()
+                .HasOne(sq => sq.InterviewSession)
+                .WithMany()
+                .HasForeignKey(sq => sq.InterviewSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // InterviewQuestion -> InterviewSessionQuestion
+            // Preserve original questions referenced by snapshots.
+            modelBuilder.Entity<InterviewSessionQuestion>()
+                .HasOne(sq => sq.InterviewQuestion)
+                .WithMany()
+                .HasForeignKey(sq => sq.InterviewQuestionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Prevent assigning the same question twice
+            // to the same interview session.
+            modelBuilder.Entity<InterviewSessionQuestion>()
+                .HasIndex(sq => new
+                {
+                    sq.InterviewSessionId,
+                    sq.InterviewQuestionId
+                })
+                .IsUnique();
+
+            // Preserve a unique display position within each session.
+            modelBuilder.Entity<InterviewSessionQuestion>()
+                .HasIndex(sq => new
+                {
+                    sq.InterviewSessionId,
+                    sq.DisplayOrder
+                })
+                .IsUnique();
         }
     }
 }
