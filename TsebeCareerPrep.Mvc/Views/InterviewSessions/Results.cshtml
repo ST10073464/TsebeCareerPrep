@@ -371,9 +371,10 @@
             }
 
             <a asp-controller="InterviewCategories"
-               asp-action="Index"
+               asp-action="Details"
+               asp-route-id="@Model.Session.InterviewCategoryId"
                class="btn btn-primary interview-results-primary-button">
-                Start Another Interview
+                Back to Category
             </a>
 
             <a asp-controller="InterviewSessions"

@@ -3,15 +3,17 @@
 @{
     ViewData["Title"] = "Interview Questions";
     var questions = Model.ToList();
+    var categoryId = ViewBag.CategoryId;
 }
 
 <div class="container py-4">
 
     <div class="mb-4">
         <a asp-controller="InterviewCategories"
-           asp-action="Index"
+           asp-action="Details"
+           asp-route-id="@categoryId"
            class="btn btn-outline-secondary mb-3">
-            Back to Categories
+            Back to Interview Preparation
         </a>
 
         <h1 class="fw-bold">Interview Questions</h1>
