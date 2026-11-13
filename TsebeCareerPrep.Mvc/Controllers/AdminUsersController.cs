@@ -65,5 +65,72 @@ namespace TsebeCareerPrep.Mvc.Controllers
                     new List<AdminUserViewModel>());
             }
         }
+
+        // POST: /AdminUsers/Unlock/{id}
+        // Administrator: Unlock a temporarily locked account.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Unlock(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                TempData["ErrorMessage"] =
+                    "A valid user account is required.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            var client = _httpClientFactory.CreateClient(
+                "AuthenticatedInterviewApi");
+
+            try
+            {
+                var response = await client.PostAsync(
+                    $"api/AdminUsers/{Uri.EscapeDataString(id)}/unlock",
+                    null);
+
+                if (response.StatusCode ==
+                    HttpStatusCode.Unauthorized)
+                {
+                    return Challenge();
+                }
+
+                if (response.StatusCode ==
+                    HttpStatusCode.Forbidden)
+                {
+                    return Forbid();
+                }
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessMessage"] =
+                        "User account unlocked successfully.";
+                }
+                else if (response.StatusCode ==
+                         HttpStatusCode.NotFound)
+                {
+                    TempData["ErrorMessage"] =
+                        "The selected user account was not found.";
+                }
+                else if (response.StatusCode ==
+                         HttpStatusCode.BadRequest)
+                {
+                    TempData["ErrorMessage"] =
+                        "The account is not locked or could not be unlocked.";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] =
+                        "Unable to unlock the user account.";
+                }
+            }
+            catch (HttpRequestException)
+            {
+                TempData["ErrorMessage"] =
+                    "The user management service is unavailable.";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
     }
 }
