@@ -36,6 +36,13 @@ namespace TsebeCareerPrep.Api.Data
         {
             base.OnModelCreating(modelBuilder);
 
+
+            // Protect InterviewSession updates from concurrent writes.
+            modelBuilder.Entity<InterviewSession>()
+                .Property(s => s.RowVersion)
+                .IsRowVersion();
+
+
             // InterviewCategory -> InterviewQuestion
             modelBuilder.Entity<InterviewQuestion>()
                 .HasOne(q => q.InterviewCategory)

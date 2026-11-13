@@ -1,4 +1,5 @@
 ﻿
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace TsebeCareerPrep.Mvc.Models
@@ -22,5 +23,15 @@ namespace TsebeCareerPrep.Mvc.Models
         [Display(Name = "Your Answer")]
         public string AnswerText { get; set; }
             = string.Empty;
+
+        // Interview timer properties
+
+        public long ActiveDurationSeconds { get; set; } = 0;
+
+        public bool IsTimerRunning { get; set; } = false;
+
+        public DateTime? TimerStartedAtUtc { get; set; }
+
+        public DateTime? LastTimerHeartbeatUtc { get; set; }
     }
 }

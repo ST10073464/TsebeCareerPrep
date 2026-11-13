@@ -21,13 +21,40 @@
     <!-- INTERVIEW HEADER -->
 
     <div class="interview-questions-header">
+       
+        <div class="d-flex justify-content-end mb-3">
 
+            @if (isInProgress)
+            {
+                
+            <form asp-controller="InterviewSessions"
+                  asp-action="Exit"
+                  asp-route-id="@Model.SessionId"
+                  method="post"
+                  class="d-inline">
+
+                @Html.AntiForgeryToken()
+
+                <button type="submit"
+                        class="btn btn-outline-secondary">
+                    Exit Interview
+                </button>
+
+            </form>
+
+            }
+
+        </div>
+
+
+       
         <a asp-controller="InterviewSessions"
-           asp-action="Details"
+           asp-action="Options"
            asp-route-id="@Model.SessionId"
            class="interview-back-link">
-            &#8592; Back to Interview Session
+            &#8592; Back to Interview Options
         </a>
+
 
         <p class="interview-questions-eyebrow">
             INTERVIEW PRACTICE
@@ -38,6 +65,42 @@
         <p class="interview-session-reference">
             Session #@Model.SessionId
         </p>
+
+        
+        <div class="mt-3 mb-3"
+             role="timer"
+             aria-label="Elapsed interview time">
+
+            <div class="d-flex flex-wrap align-items-center gap-3">
+
+                <div>
+                    <p class="mb-1 small">
+                        Interview Duration
+                    </p>
+
+                    <div id="interviewTimer"
+                         class="fs-3 fw-bold font-monospace"
+                         data-elapsed-seconds="@Model.ActiveDurationSeconds"
+                         data-running="@Model.IsTimerRunning.ToString().ToLowerInvariant()"
+                         data-started-at="@Model.TimerStartedAtUtc?.ToString("O")"
+                         data-last-heartbeat="@Model.LastTimerHeartbeatUtc?.ToString("O")"
+                         data-heartbeat-url="@Url.Action("Heartbeat", "InterviewSessions", new { id = Model.SessionId })">
+                        @TimeSpan.FromSeconds(
+                            Model.ActiveDurationSeconds
+                        ).ToString(@"hh\:mm\:ss")
+                    </div>
+                </div>
+
+                <span id="interviewTimerStatus"
+                      class="badge @(Model.IsTimerRunning ? "bg-success" : "bg-secondary")">
+                    @(Model.IsTimerRunning ? "Running" : "Paused")
+                </span>
+
+            </div>
+
+        </div>
+
+
 
         <div class="interview-header-status">
             <span class="interview-status-pill @(isInProgress ? "in-progress" : "completed")">
@@ -281,6 +344,13 @@
 
 
 @section Scripts {
+    <form id="interviewTimerSecurityForm" class="d-none">
+        @Html.AntiForgeryToken()
+    </form>
+
+    <script src="~/js/interview-timer.js"
+            asp-append-version="true"></script>
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
 

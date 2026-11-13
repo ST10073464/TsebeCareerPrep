@@ -5,94 +5,89 @@
 }
 
 <section class="interview-answer-page">
-
     <!-- =====================================
          ANSWER PAGE HEADER
          ===================================== -->
-
     <div class="interview-answer-header">
-
         <a asp-controller="InterviewSessions"
-           asp-action="Details"
+           asp-action="Questions"
            asp-route-id="@Model.InterviewSessionId"
            class="interview-back-link">
-
             <span aria-hidden="true">&#8592;</span>
-            Back to Interview Session
-
+            Back to Interview Questions
         </a>
 
-        <p class="interview-answer-eyebrow">
-            INTERVIEW PRACTICE
-        </p>
+        <p class="interview-answer-eyebrow">INTERVIEW PRACTICE</p>
 
-        <h1>
-            Answer Interview Question
-        </h1>
+        <h1>Answer Interview Question</h1>
 
         <p class="interview-answer-introduction">
             Take your time, organise your thoughts and
             communicate your answer clearly.
         </p>
 
-    </div>
+        <!-- Interview timer: shared across Questions and Answer views -->
+        <div class="mt-3 mb-3"
+             role="timer"
+             aria-label="Elapsed interview time">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <div>
+                    <p class="mb-1 small">Interview Duration</p>
 
+                    <div id="interviewTimer"
+                         class="fs-3 fw-bold font-monospace"
+                         data-elapsed-seconds="@Model.ActiveDurationSeconds"
+                         data-running="@Model.IsTimerRunning.ToString().ToLowerInvariant()"
+                         data-started-at="@Model.TimerStartedAtUtc?.ToString("O")"
+                         data-last-heartbeat="@Model.LastTimerHeartbeatUtc?.ToString("O")"
+                         data-heartbeat-url="@Url.Action("Heartbeat", "InterviewSessions", new { id = Model.InterviewSessionId })">
+                        @TimeSpan.FromSeconds(Model.ActiveDurationSeconds).ToString(@"hh\:mm\:ss")
+                    </div>
+                </div>
+
+                <span id="interviewTimerStatus"
+                      class="badge @(Model.IsTimerRunning ? "bg-success" : "bg-secondary")">
+                    @(Model.IsTimerRunning ? "Running" : "Paused")
+                </span>
+            </div>
+        </div>
+    </div>
 
     <!-- =====================================
          QUESTION AND ANSWER CONTENT
          ===================================== -->
-
     <div class="interview-answer-content">
-
         <article class="interview-answer-card">
-
-            <!-- Question information -->
-
             <div class="interview-answer-question">
-
                 <span class="interview-answer-question-label">
                     Question @Model.InterviewQuestionId
                 </span>
 
-                <h2>
-                    @Model.QuestionText
-                </h2>
+                <h2>@Model.QuestionText</h2>
 
                 <p>
                     Consider your knowledge, experience and
                     relevant examples before responding.
                 </p>
-
             </div>
-
-
-            <!-- Answer submission form -->
 
             <form asp-controller="InterviewSessions"
                   asp-action="Answer"
                   method="post"
                   class="interview-answer-form">
-
                 @Html.AntiForgeryToken()
 
-                <input asp-for="InterviewSessionId"
-                       type="hidden" />
-
-                <input asp-for="InterviewQuestionId"
-                       type="hidden" />
+                <input asp-for="InterviewSessionId" type="hidden" />
+                <input asp-for="InterviewQuestionId" type="hidden" />
 
                 <div asp-validation-summary="ModelOnly"
                      class="text-danger mb-3"
-                     role="alert">
-                </div>
+                     role="alert"></div>
 
                 <div class="interview-answer-field">
-
                     <label asp-for="AnswerText"
                            class="form-label interview-answer-label">
-
                         Your Answer
-
                     </label>
 
                     <p class="interview-answer-help">
@@ -109,77 +104,53 @@
                               aria-describedby="answerCharacterLimit"></textarea>
 
                     <span asp-validation-for="AnswerText"
-                          class="text-danger d-block mt-2">
-                    </span>
+                          class="text-danger d-block mt-2"></span>
 
                     <div class="interview-answer-field-footer">
-
                         <span id="answerCharacterLimit">
                             Maximum 5,000 characters
                         </span>
-
                     </div>
-
                 </div>
 
-
-                <!-- Form actions -->
-
                 <div class="interview-answer-actions">
-
                     <button type="submit"
                             class="btn btn-primary interview-submit-button">
-
                         Submit Answer
-
                     </button>
 
                     <a asp-controller="InterviewSessions"
-                       asp-action="Details"
+                       asp-action="Questions"
                        asp-route-id="@Model.InterviewSessionId"
                        class="btn btn-outline-secondary interview-cancel-button">
-
-                        Cancel
-
+                        Cancel Answer
                     </a>
-
                 </div>
-
             </form>
-
         </article>
 
-
-        <!-- Preparation reminder -->
-
         <aside class="interview-answer-tip">
-
-            <div class="interview-answer-tip-icon"
-                 aria-hidden="true">
-                💡
-            </div>
-
+            <div class="interview-answer-tip-icon" aria-hidden="true">💡</div>
             <div>
-
-                <h2>
-                    Interview Preparation Tip
-                </h2>
-
+                <h2>Interview Preparation Tip</h2>
                 <p>
                     Focus on answering the question directly.
                     Where appropriate, support your response
                     with practical examples from your studies,
                     work experience or personal projects.
                 </p>
-
             </div>
-
         </aside>
-
     </div>
-
 </section>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <form id="interviewTimerSecurityForm" class="d-none">
+        @Html.AntiForgeryToken()
+    </form>
+
+    <script src="~/js/interview-timer.js"
+            asp-append-version="true"></script>
 }

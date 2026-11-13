@@ -1,0 +1,130 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+@model TsebeCareerPrep.Mvc.Models.InterviewSessionViewModel
+
+@{
+    ViewData["Title"] = "Ready to Begin";
+}
+
+<section class="interview-history-page">
+
+    <div class="interview-history-header">
+
+        <p class="interview-history-eyebrow">
+            INTERVIEW PREPARATION
+        </p>
+
+        <h1>Ready to Begin?</h1>
+
+        <p class="interview-history-introduction">
+            You are about to begin your
+            @Model.CategoryName interview.
+            Take your time, read each question carefully
+            and answer with confidence.
+        </p>
+
+        <div class="interview-history-header-stats">
+
+            <div class="interview-history-header-stat">
+                <strong>#@Model.Id</strong>
+                <span>Session</span>
+            </div>
+
+            <div class="interview-history-header-stat">
+                <strong>Ready</strong>
+                <span>Status</span>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="interview-history-content">
+
+        <div class="interview-history-toolbar">
+
+            <div>
+                <h2>@Model.CategoryName</h2>
+
+                <p>
+                    Your interview is ready.
+                    Select Begin Interview when you are prepared.
+                </p>
+            </div>
+
+        </div>
+
+        <div class="row g-4">
+
+            <div class="col-12 col-lg-8">
+
+                <article class="interview-history-card h-100">
+
+                    <div class="interview-history-card-top">
+                        <h3>Before You Begin</h3>
+                    </div>
+
+                    <div class="mt-3">
+
+                        <p>
+                            Your interview will begin at Question 1.
+                        </p>
+
+                        <p>
+                            Your answers will be saved as you submit them.
+                        </p>
+
+                        <p>
+                            You can review the available practice questions
+                            before starting.
+                        </p>
+
+                        <p class="small text-muted">
+                            Session #@Model.Id will remain the same
+                            throughout this interview attempt.
+                        </p>
+
+                    </div>
+
+                    <div class="interview-history-card-footer
+                                d-flex flex-wrap gap-2">
+
+                       
+                        <form asp-controller="InterviewSessions"
+                              asp-action="Begin"
+                              asp-route-id="@Model.Id"
+                              method="post"
+                              class="d-inline">
+
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit"
+                                    class="btn btn-primary interview-history-action">
+                                Begin Interview
+                            </button>
+
+                        </form>
+
+
+                        <a asp-controller="InterviewSessions"
+                           asp-action="Options"
+                           asp-route-id="@Model.Id"
+                           class="btn btn-outline-primary interview-history-action">
+                            Back to Interview Options
+                        </a>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>

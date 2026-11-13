@@ -18,5 +18,8 @@ namespace TsebeCareerPrep.Mvc.Models
         public DateTime? CompletedAt { get; set; }
 
         public int TotalAnswered { get; set; }
+
+        // Total recorded interview time in seconds.
+        public long ActiveDurationSeconds { get; set; }
     }
 }

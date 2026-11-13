@@ -116,6 +116,17 @@
                     </div>
                 </div>
 
+                <div class="col-6 col-md-4">
+                    <div class="interview-results-stat">
+                        <span class="interview-results-stat-label">
+                            Interview Duration
+                        </span>
+                        <strong>
+                            @TimeSpan.FromSeconds(Math.Max(0, Model.Session.ActiveDurationSeconds)).ToString(@"hh\:mm\:ss")
+                        </strong>
+                    </div>
+                </div>
+
                 <div class="col-12 col-md-6">
                     <div class="interview-results-stat">
                         <span class="interview-results-stat-label">

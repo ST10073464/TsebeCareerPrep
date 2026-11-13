@@ -1,0 +1,167 @@
+﻿@model TsebeCareerPrep.Mvc.Models.InterviewSessionViewModel
+
+@{
+    ViewData["Title"] = "Interview Options";
+
+    var isInProgress = Model.Status == "InProgress";
+    var isCompleted = Model.Status == "Completed";
+}
+
+<section class="interview-history-page">
+    <div class="interview-history-header">
+        <p class="interview-history-eyebrow">
+            INTERVIEW MANAGEMENT
+        </p>
+        <h1>Interview Options</h1>
+        <p class="interview-history-introduction">
+            Manage your @Model.CategoryName interview,
+            continue practising or review your preparation
+            materials.
+        </p>
+        <div class="interview-history-header-stats">
+            <div class="interview-history-header-stat">
+                <strong>#@Model.Id</strong>
+                <span>Session</span>
+            </div>
+            <div class="interview-history-header-stat">
+                <strong>
+                    @(isInProgress ? "Active" : Model.Status)
+                </strong>
+                <span>Status</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="interview-history-content">
+        <div class="interview-history-toolbar">
+            <div>
+                <h2>@Model.CategoryName</h2>
+                <p>
+                    Select how you would like to continue
+                    your interview preparation.
+                </p>
+            </div>
+            <a asp-controller="InterviewSessions"
+               asp-action="History"
+               asp-fragment="category-@Model.InterviewCategoryId"
+               class="btn btn-outline-primary">
+                Back to My Interviews
+            </a>
+        </div>
+
+        <div class="row g-4">
+            @if (isInProgress)
+            {
+                <div class="col-12 col-md-6">
+                    <article class="interview-history-card h-100">
+                        <div class="interview-history-card-top">
+                            <h3>Continue Previous Attempt</h3>
+                            <span class="interview-history-status in-progress">
+                                In Progress
+                            </span>
+                        </div>
+                        <p class="mt-3">
+                            Resume your existing interview.
+                            Your previously submitted answers
+                            will remain saved.
+                        </p>
+                        <div class="interview-history-card-footer">
+                            <form asp-controller="InterviewSessions"
+                                  asp-action="Begin"
+                                  asp-route-id="@Model.Id"
+                                  method="post"
+                                  class="w-100">
+                                @Html.AntiForgeryToken()
+                                <button type="submit"
+                                        class="btn btn-primary interview-history-action">
+                                    Continue Interview
+                                </button>
+                            </form>
+                        </div>
+                    </article>
+                </div>
+            }
+
+            @if (isCompleted)
+            {
+                <div class="col-12 col-md-6">
+                    <article class="interview-history-card h-100">
+                        <div class="interview-history-card-top">
+                            <h3>View Previous Results</h3>
+                            <span class="interview-history-status completed">
+                                Completed
+                            </span>
+                        </div>
+                        <p class="mt-3">
+                            Review your completed interview,
+                            submitted answers and feedback.
+                        </p>
+                        <div class="interview-history-card-footer">
+                            <a asp-controller="InterviewSessions"
+                               asp-action="Results"
+                               asp-route-id="@Model.Id"
+                               class="btn btn-success interview-history-action">
+                                View Results
+                            </a>
+                        </div>
+                    </article>
+                </div>
+            }
+
+            <div class="col-12 col-md-6">
+                <article class="interview-history-card h-100">
+                    <div class="interview-history-card-top">
+                        <h3>Review All Practice Questions</h3>
+                    </div>
+                    <p class="mt-3">
+                        Explore the questions available for
+                        @Model.CategoryName without changing
+                        your current interview progress.
+                    </p>
+                    <div class="interview-history-card-footer">
+                        <a asp-controller="InterviewQuestions"
+                           asp-action="Category"
+                           asp-route-id="@Model.InterviewCategoryId"
+                           class="btn btn-outline-primary interview-history-action">
+                            Review Practice Questions
+                        </a>
+                    </div>
+                </article>
+            </div>
+
+            @if (isInProgress)
+            {
+                <div class="col-12 col-md-6">
+                    <article class="interview-history-card h-100">
+                        <div class="interview-history-card-top">
+                            <h3>Restart From Beginning</h3>
+                        </div>
+                        <p class="mt-3">
+                            Start a fresh interview attempt
+                            from Question 1.
+                        </p>
+                        <p class="small text-muted">
+                            Restarting will clear your answers for this
+                            unfinished session and return you to Question 1.
+                            Your Session ID and previously completed interviews
+                            will remain unchanged.
+                        </p>
+                        <div class="interview-history-card-footer">
+                            <form asp-controller="InterviewSessions"
+                                  asp-action="Restart"
+                                  asp-route-id="@Model.Id"
+                                  method="post"
+                                  onsubmit="return confirm('Restart Session #@Model.Id? All submitted answers and feedback for this unfinished session will be permanently deleted. Your completed interviews will remain unchanged.');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit"
+                                        class="btn btn-outline-danger interview-history-action">
+                                    Restart From Beginning
+                                </button>
+                            </form>
+                        </div>
+                    </article>
+                </div>
+            }
+        </div>
+    </div>
+</section>

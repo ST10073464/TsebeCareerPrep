@@ -412,11 +412,26 @@ namespace TsebeCareerPrep.Api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<long>("ActiveDurationSeconds")
+                        .HasColumnType("bigint");
+
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("InterviewCategoryId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsTimerRunning")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastTimerHeartbeatUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<DateTime>("StartedAt")
                         .HasColumnType("datetime2");
@@ -425,6 +440,9 @@ namespace TsebeCareerPrep.Api.Migrations
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("TimerStartedAtUtc")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("UserId")
                         .IsRequired()

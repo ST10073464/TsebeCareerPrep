@@ -81,6 +81,67 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
         }
 
+
+        // POST: api/InterviewSessions/41/timer/start
+        [HttpPost("{id:int}/timer/start")]
+        public async Task<IActionResult> StartTimer(int id)
+        {
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var session = await _context.InterviewSessions
+                .FirstOrDefaultAsync(s =>
+                    s.Id == id &&
+                    s.UserId == userId);
+
+            if (session == null)
+            {
+                return NotFound(new
+                {
+                    message = "Interview session not found."
+                });
+            }
+
+            if (session.Status != "InProgress")
+            {
+                return Conflict(new
+                {
+                    message =
+                        "The timer can only run for an interview in progress."
+                });
+            }
+
+            InterviewTimerService.Start(
+                session,
+                DateTime.UtcNow);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Conflict(new
+                {
+                    message =
+                        "The interview session was updated by another request. " +
+                        "Please refresh and try again."
+                });
+            }
+
+            return Ok(new
+            {
+                session.Id,
+                session.Status,
+                session.IsTimerRunning,
+                session.ActiveDurationSeconds,
+                session.TimerStartedAtUtc
+            });
+        }
+
+
         // GET: api/InterviewSessions/1
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetSession(int id)
@@ -95,6 +156,7 @@ namespace TsebeCareerPrep.Api.Controllers
                 .Where(s =>
                     s.Id == id &&
                     s.UserId == userId)
+
                 .Select(s => new
                 {
                     s.Id,
@@ -102,8 +164,15 @@ namespace TsebeCareerPrep.Api.Controllers
                     CategoryName = s.InterviewCategory!.Name,
                     s.StartedAt,
                     s.CompletedAt,
-                    s.Status
+                    s.Status,
+
+                    // Interview timer information
+                    s.ActiveDurationSeconds,
+                    s.IsTimerRunning,
+                    s.TimerStartedAtUtc,
+                    s.LastTimerHeartbeatUtc
                 })
+
                 .FirstOrDefaultAsync();
 
             if (session == null)
@@ -116,6 +185,201 @@ namespace TsebeCareerPrep.Api.Controllers
 
             return Ok(session);
         }
+
+        // POST: api/InterviewSessions/41/restart
+        [HttpPost("{id:int}/restart")]
+        public async Task<IActionResult> RestartInterview(int id)
+        {
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            if (id <= 0)
+                return BadRequest(new
+                {
+                    message = "Invalid interview session ID."
+                });
+
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+
+            // Only the owner may restart an active session.
+            var session = await _context.InterviewSessions
+                .FirstOrDefaultAsync(s =>
+                    s.Id == id &&
+                    s.UserId == userId);
+
+            if (session == null)
+                return NotFound(new
+                {
+                    message = "Interview session not found."
+                });
+
+            if (session.Status != "InProgress")
+                return Conflict(new
+                {
+                    message =
+                        "Only an interview in progress can be restarted."
+                });
+
+            // Load responses for this session only.
+            // Related assessments are deleted by the
+            // database's verified cascade relationship.
+            var responses = await _context.InterviewResponses
+                .Where(r => r.InterviewSessionId == session.Id)
+                .ToListAsync();
+
+            _context.InterviewResponses.RemoveRange(responses);
+
+
+            // Preserve the existing session ID and category.
+            session.StartedAt = DateTime.UtcNow;
+            session.CompletedAt = null;
+            session.Status = "InProgress";
+
+            // Reset accumulated interview time.
+            // The timer remains paused until Begin Interview is clicked.
+            InterviewTimerService.Reset(session);
+
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return Ok(new
+            {
+                session.Id,
+                session.InterviewCategoryId,
+                session.StartedAt,
+                session.Status,
+                TotalAnswered = 0,
+                message =
+                    "Interview restarted successfully. Ready to begin."
+            });
+        }
+
+
+
+        // POST: api/InterviewSessions/41/timer/pause
+        [HttpPost("{id:int}/timer/pause")]
+        public async Task<IActionResult> PauseTimer(int id)
+        {
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var session = await _context.InterviewSessions
+                .FirstOrDefaultAsync(s =>
+                    s.Id == id &&
+                    s.UserId == userId);
+
+            if (session == null)
+            {
+                return NotFound(new
+                {
+                    message = "Interview session not found."
+                });
+            }
+
+            InterviewTimerService.Pause(
+                session,
+                DateTime.UtcNow);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Conflict(new
+                {
+                    message =
+                        "The interview session was updated by another request. " +
+                        "Please refresh and try again."
+                });
+            }
+
+            return Ok(new
+            {
+                session.Id,
+                session.Status,
+                session.IsTimerRunning,
+                session.ActiveDurationSeconds,
+                message = "Interview timer paused."
+            });
+        }
+
+
+
+        // POST: api/InterviewSessions/41/timer/heartbeat
+        [HttpPost("{id:int}/timer/heartbeat")]
+        public async Task<IActionResult> TimerHeartbeat(int id)
+        {
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var session = await _context.InterviewSessions
+                .FirstOrDefaultAsync(s =>
+                    s.Id == id &&
+                    s.UserId == userId);
+
+            if (session == null)
+            {
+                return NotFound(new
+                {
+                    message = "Interview session not found."
+                });
+            }
+
+            if (session.Status != "InProgress")
+            {
+                return Conflict(new
+                {
+                    message =
+                        "The timer is only available for an interview in progress."
+                });
+            }
+
+            if (!session.IsTimerRunning)
+            {
+                return Conflict(new
+                {
+                    message = "The interview timer is paused."
+                });
+            }
+
+            InterviewTimerService.Heartbeat(
+                session,
+                DateTime.UtcNow);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Conflict(new
+                {
+                    message =
+                        "The interview session was updated by another request. " +
+                        "Please refresh and try again."
+                });
+            }
+
+            return Ok(new
+            {
+                session.Id,
+                session.Status,
+                session.IsTimerRunning,
+                session.ActiveDurationSeconds,
+                session.LastTimerHeartbeatUtc
+            });
+        }
+
+
 
         // POST: api/InterviewSessions/1/complete
         [HttpPost("{id:int}/complete")]
@@ -168,8 +432,16 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
+
+            var completedAtUtc = DateTime.UtcNow;
+
+            // Stop the timer and preserve the accumulated duration.
+            InterviewTimerService.Pause(session, completedAtUtc);
+
+            // Mark the interview as completed.
             session.Status = "Completed";
-            session.CompletedAt = DateTime.UtcNow;
+            session.CompletedAt = completedAtUtc;
+
 
             await _context.SaveChangesAsync();
 
@@ -182,7 +454,6 @@ namespace TsebeCareerPrep.Api.Controllers
                 message = "Interview session completed successfully."
             });
         }
-
 
         // POST: api/InterviewSessions/1/reopen
         [HttpPost("{id:int}/reopen")]
@@ -257,9 +528,6 @@ namespace TsebeCareerPrep.Api.Controllers
             });
         }
 
-
-        // GET: api/InterviewSessions/1/results
-
         // GET: api/InterviewSessions/1/results
         [HttpGet("{id:int}/results")]
         public async Task<IActionResult> GetSessionResults(int id)
@@ -281,7 +549,8 @@ namespace TsebeCareerPrep.Api.Controllers
                     CategoryName = s.InterviewCategory!.Name,
                     s.StartedAt,
                     s.CompletedAt,
-                    s.Status
+                    s.Status,
+                    s.ActiveDurationSeconds
                 })
                 .FirstOrDefaultAsync();
 
@@ -387,8 +656,6 @@ namespace TsebeCareerPrep.Api.Controllers
             });
         }
 
-
-
         // GET: api/InterviewSessions/history
         [HttpGet("history")]
         public async Task<IActionResult> GetInterviewHistory()
@@ -410,6 +677,7 @@ namespace TsebeCareerPrep.Api.Controllers
                     s.Status,
                     s.StartedAt,
                     s.CompletedAt,
+                    s.ActiveDurationSeconds,
                     TotalAnswered = _context.InterviewResponses
                         .Count(r =>
                             r.InterviewSessionId == s.Id)
