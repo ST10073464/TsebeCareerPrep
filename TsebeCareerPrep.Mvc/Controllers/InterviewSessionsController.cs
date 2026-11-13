@@ -58,7 +58,7 @@ namespace TsebeCareerPrep.Mvc.Controllers
 
 
             return RedirectToAction(
-                "Questions", new { id = session.Id });
+                "Ready", new { id = session.Id });
 
         }
 

@@ -46,15 +46,33 @@
 
         </div>
 
+        @if (isInProgress)
+        {
+            <form asp-controller="InterviewSessions"
+                  asp-action="Exit"
+                  asp-route-id="@Model.SessionId"
+                  method="post"
+                  class="mb-3">
 
+                @Html.AntiForgeryToken()
+
+                <button type="submit"
+                        class="interview-back-link border-0 bg-transparent p-0">
+                    &#8592; Back to My Interviews
+                </button>
+            </form>
+        }
+        else
+        {
+            <a asp-controller="InterviewSessions"
+               asp-action="Options"
+               asp-route-id="@Model.SessionId"
+               class="interview-back-link">
+                &#8592; Back to Interview Options
+            </a>
+        }
        
-        <a asp-controller="InterviewSessions"
-           asp-action="Options"
-           asp-route-id="@Model.SessionId"
-           class="interview-back-link">
-            &#8592; Back to Interview Options
-        </a>
-
+      
 
         <p class="interview-questions-eyebrow">
             INTERVIEW PRACTICE

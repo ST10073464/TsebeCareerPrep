@@ -126,7 +126,15 @@
 
         updateDisplay();
 
+        // Synchronize with the server immediately when the page opens.
+        if (isRunning) {
+            sendHeartbeat();
+        }
+
+        // Refresh the displayed timer every second.
         setInterval(updateDisplay, 1000);
+
+        // Keep the saved duration synchronized every 10 seconds.
         setInterval(sendHeartbeat, 10000);
     });
 })();
