@@ -1,0 +1,91 @@
+﻿@model TsebeCareerPrep.Mvc.Models.InterviewCategoryAdminViewModel
+
+@{
+    ViewData["Title"] = "Create Interview Category";
+}
+
+<div class="container mt-4">
+
+    <div class="mb-4">
+        <h2>Create Interview Category</h2>
+        <p class="text-muted">
+            Add a new category for interview preparation.
+        </p>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 col-xl-7">
+
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+
+                    <form asp-controller="AdminCategories"
+                          asp-action="Create"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly"
+                             class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Name"
+                                   class="form-label"></label>
+
+                            <input asp-for="Name"
+                                   class="form-control"
+                                   placeholder="e.g. Customer Service" />
+
+                            <span asp-validation-for="Name"
+                                  class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description"
+                                   class="form-label"></label>
+
+                            <textarea asp-for="Description"
+                                      class="form-control"
+                                      rows="4"
+                                      placeholder="Describe the interview category"></textarea>
+
+                            <span asp-validation-for="Description"
+                                  class="text-danger"></span>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <input asp-for="IsActive"
+                                   class="form-check-input" />
+
+                            <label asp-for="IsActive"
+                                   class="form-check-label">
+                                Make this category active
+                            </label>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit"
+                                    class="btn btn-primary">
+                                Create Category
+                            </button>
+
+                            <a asp-controller="AdminCategories"
+                               asp-action="Index"
+                               class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

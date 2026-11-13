@@ -134,5 +134,68 @@ namespace TsebeCareerPrep.Api.Controllers
         }
 
 
+        // =====================================================
+        // PUT: api/InterviewCategories/admin/{id}
+        // Administrator: Update an interview category.
+        // =====================================================
+        [HttpPut("admin/{id:int}")]
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> UpdateCategoryAdmin(
+            int id,
+            [FromBody] UpdateInterviewCategoryRequest request)
+        {
+            var category = await _context.InterviewCategories
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (category == null)
+            {
+                return NotFound(new
+                {
+                    message = "Interview category not found."
+                });
+            }
+
+            var name = request.Name?.Trim();
+            var description = request.Description?.Trim();
+
+            if (string.IsNullOrWhiteSpace(name) ||
+                string.IsNullOrWhiteSpace(description))
+            {
+                return BadRequest(new
+                {
+                    message = "Category name and description are required."
+                });
+            }
+
+            // Prevent duplicate names across other categories.
+            var duplicateExists = await _context.InterviewCategories
+                .AnyAsync(c =>
+                    c.Id != id &&
+                    c.Name.ToLower() == name.ToLower());
+
+            if (duplicateExists)
+            {
+                return Conflict(new
+                {
+                    message = "Another interview category already uses this name."
+                });
+            }
+
+            category.Name = name;
+            category.Description = description;
+            category.IsActive = request.IsActive;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                category.Id,
+                category.Name,
+                category.Description,
+                category.IsActive
+            });
+        }
+
+
     }
 }
