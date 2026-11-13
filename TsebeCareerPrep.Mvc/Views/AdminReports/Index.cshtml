@@ -1,0 +1,242 @@
+﻿@model TsebeCareerPrep.Mvc.Models.AdminReportOverviewViewModel
+
+@{
+    ViewData["Title"] = "Administrator Reports";
+
+    var otherSessions = Math.Max(
+        0,
+        Model.TotalSessions
+        - Model.CompletedSessions
+        - Model.InProgressSessions);
+
+    var completionWidth = Math.Clamp(
+        Model.CompletionRate, 0, 100);
+}
+
+<div class="container py-5">
+
+    <!-- Page heading -->
+    <div class="d-flex justify-content-between
+        align-items-start flex-wrap gap-3 mb-4">
+
+        <div>
+            <h1 class="fw-bold">Administrator Reports</h1>
+
+            <p class="text-muted">
+                Platform-wide interview activity and
+                performance statistics.
+            </p>
+        </div>
+
+        <a asp-controller="Admin"
+           asp-action="Index"
+           class="btn btn-outline-secondary">
+            Back to Dashboard
+        </a>
+
+    </div>
+
+    <!-- Overview cards -->
+    <div class="row g-4 mb-5">
+
+        <div class="col-md-6 col-xl-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body p-4">
+                    <p class="text-muted mb-2">
+                        Registered Users
+                    </p>
+                    <h2 class="fw-bold mb-0">
+                        @Model.TotalUsers
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body p-4">
+                    <p class="text-muted mb-2">
+                        Total Interview Sessions
+                    </p>
+                    <h2 class="fw-bold mb-0">
+                        @Model.TotalSessions
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body p-4">
+                    <p class="text-muted mb-2">
+                        Completed Interviews
+                    </p>
+                    <h2 class="fw-bold mb-0">
+                        @Model.CompletedSessions
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body p-4">
+                    <p class="text-muted mb-2">
+                        In-Progress Interviews
+                    </p>
+                    <h2 class="fw-bold mb-0">
+                        @Model.InProgressSessions
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body p-4">
+                    <p class="text-muted mb-2">
+                        Active Interview Categories
+                    </p>
+                    <h2 class="fw-bold mb-0">
+                        @Model.ActiveCategories
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body p-4">
+                    <p class="text-muted mb-2">
+                        Submitted Answers
+                    </p>
+                    <h2 class="fw-bold mb-0">
+                        @Model.TotalAnswers
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Interview completion rate -->
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body p-4">
+
+            <h4 class="fw-bold mb-3">
+                Interview Completion Rate
+            </h4>
+
+            <div class="d-flex justify-content-between mb-2">
+
+                <span class="text-muted">
+                    Completed interview sessions
+                </span>
+
+                <strong>
+                    @Model.CompletionRate.ToString("0.#")%
+                </strong>
+
+            </div>
+
+            <div class="progress"
+                 role="progressbar"
+                 aria-label="Interview completion rate"
+                 aria-valuenow="@completionWidth"
+                 aria-valuemin="0"
+                 aria-valuemax="100"
+                 style="height: 18px;">
+
+                <div class="progress-bar bg-success"
+                     style="width: @(completionWidth.ToString(System.Globalization.CultureInfo.InvariantCulture))%;">
+                </div>
+
+            </div>
+
+            <p class="text-muted mt-3 mb-0">
+                @Model.CompletedSessions of
+                @Model.TotalSessions interview sessions completed.
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- Session breakdown -->
+    <div class="card shadow-sm">
+
+        <div class="card-body p-4">
+
+            <h4 class="fw-bold mb-3">
+                Interview Session Breakdown
+            </h4>
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered align-middle mb-0">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>Session Status</th>
+                            <th class="text-end">
+                                Number of Sessions
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        <tr>
+                            <td>
+                                <span class="badge bg-success">
+                                    Completed
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                @Model.CompletedSessions
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <span class="badge bg-primary">
+                                    In Progress
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                @Model.InProgressSessions
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <span class="badge bg-secondary">
+                                    Other Statuses
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                @otherSessions
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                    <tfoot class="table-light">
+                        <tr>
+                            <th>Total Sessions</th>
+                            <th class="text-end">
+                                @Model.TotalSessions
+                            </th>
+                        </tr>
+                    </tfoot>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

@@ -16,9 +16,9 @@
     <div class="row g-4">
 
         <!-- Interview Questions Management -->
-        <div class="col-md-6">
+        <div class="col-md-6 col-xl-4">
             <div class="card h-100 shadow-sm">
-                <div class="card-body p-4">
+                <div class="card-body p-4 d-flex flex-column">
 
                     <h4 class="fw-bold">
                         Interview Questions
@@ -29,20 +29,22 @@
                         interview questions.
                     </p>
 
-                    <a asp-controller="AdminQuestions"
-                       asp-action="Index"
-                       class="btn btn-primary">
-                        Manage Questions
-                    </a>
+                    <div class="mt-auto">
+                        <a asp-controller="AdminQuestions"
+                           asp-action="Index"
+                           class="btn btn-primary">
+                            Manage Questions
+                        </a>
+                    </div>
 
                 </div>
             </div>
         </div>
 
         <!-- Interview Categories Management -->
-        <div class="col-md-6">
+        <div class="col-md-6 col-xl-4">
             <div class="card h-100 shadow-sm">
-                <div class="card-body p-4">
+                <div class="card-body p-4 d-flex flex-column">
 
                     <h4 class="fw-bold">
                         Interview Categories
@@ -53,11 +55,39 @@
                         interview categories.
                     </p>
 
-                    <a asp-controller="AdminCategories"
-                       asp-action="Index"
-                       class="btn btn-primary">
-                        Manage Categories
-                    </a>
+                    <div class="mt-auto">
+                        <a asp-controller="AdminCategories"
+                           asp-action="Index"
+                           class="btn btn-primary">
+                            Manage Categories
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Administrator Reporting -->
+        <div class="col-md-6 col-xl-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body p-4 d-flex flex-column">
+
+                    <h4 class="fw-bold">
+                        Administrator Reports
+                    </h4>
+
+                    <p class="text-muted">
+                        View registered users, interview activity,
+                        completion rates and platform statistics.
+                    </p>
+
+                    <div class="mt-auto">
+                        <a asp-controller="AdminReports"
+                           asp-action="Index"
+                           class="btn btn-primary">
+                            View Reports
+                        </a>
+                    </div>
 
                 </div>
             </div>
