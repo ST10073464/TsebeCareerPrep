@@ -1,7 +1,10 @@
-﻿@model TsebeCareerPrep.Mvc.Models.EditInterviewQuestionViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model TsebeCareerPrep.Mvc.Models.EditInterviewQuestionViewModel
 
 @{
     ViewData["Title"] = "Edit Interview Question";
+    var categories = ViewBag.Categories as IEnumerable<SelectListItem>
+        ?? Enumerable.Empty<SelectListItem>();
 }
 
 <style>
@@ -29,7 +32,7 @@
     .edit-question-page .form-control:focus,
     .edit-question-page .form-select:focus {
         border-color: #0d6efd;
-        box-shadow: 0 0 0 0.2rem rgba(13,110,253,.15);
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, .15);
     }
 
     .edit-question-page .form-text {
@@ -70,212 +73,149 @@
 </style>
 
 <div class="container py-5 edit-question-page">
-
     <!-- PAGE HEADER -->
     <div class="mb-4">
 
         <a asp-controller="AdminQuestions"
-           asp-action="Index"
+           asp-action="ByCategory"
+           asp-route-id="@Model.InterviewCategoryId"
            class="btn btn-outline-secondary mb-3">
-            Back to Question Bank
+            ← Back to Category
         </a>
 
-        <h1 class="fw-bold mb-2">
-            Edit Interview Question
-        </h1>
 
+        <h1 class="fw-bold mb-2">Edit Interview Question</h1>
         <p class="text-muted mb-0">
-            Update question #@Model.Id in the
-            interview question bank.
+            Update question #@Model.Id in the interview question bank.
         </p>
-
     </div>
 
     <!-- EDIT FORM -->
     <div class="card shadow-sm edit-question-card">
-
         <div class="card-body p-4">
-
             <form asp-controller="AdminQuestions"
                   asp-action="Edit"
                   asp-route-id="@Model.Id"
                   method="post">
-
                 @Html.AntiForgeryToken()
-
                 <input asp-for="Id" type="hidden" />
 
                 <!-- VALIDATION -->
-                <div asp-validation-summary="All"
-                     class="text-danger mb-3">
-                </div>
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
-                <!-- INTERVIEW CATEGORY -->
+
+                <!-- INTERVIEW CATEGORY - READ ONLY -->
                 <div class="mb-4">
 
-                    <label asp-for="InterviewCategoryId"
-                           class="form-label fw-semibold">
+                    <label class="form-label fw-semibold">
                         Interview Category
                     </label>
 
-                    <select asp-for="InterviewCategoryId"
-                            class="form-select"
-                            required>
+                    <div class="form-control bg-light d-flex
+                        align-items-center justify-content-between"
+                         style="min-height: 48px;">
 
-                        <option value="0">
-                            Select an interview category
-                        </option>
+                        <span>
+                            @(
+                                (ViewBag.Categories as
+                                    IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)
+                                ?.FirstOrDefault(c =>
+                                    c.Value == Model.InterviewCategoryId.ToString())
+                                ?.Text ?? "Unknown Category"
+                            )
+                        </span>
 
-                        <option value="1">
-                            Software Development
-                        </option>
+                        <span aria-label="Category locked"
+                              title="Category cannot be changed">
+                            🔒
+                        </span>
 
-                        <option value="2">
-                            Administration
-                        </option>
+                    </div>
 
-                        <option value="4">
-                            Management
-                        </option>
+                    <div class="form-text">
+                        This question belongs to the category shown above.
+                        Its category cannot be changed while editing.
+                    </div>
 
-                        <option value="6">
-                            Finance
-                        </option>
-
-                        <option value="7">
-                            Human Resources
-                        </option>
-
-                        <option value="8">
-                            Customer Service
-                        </option>
-
-                    </select>
-
-                    <span asp-validation-for="InterviewCategoryId"
-                          class="text-danger">
-                    </span>
+                    <!-- Retain the original category for model binding.
+         The server must independently verify it. -->
+                    <input asp-for="InterviewCategoryId" type="hidden" />
 
                 </div>
 
+
                 <!-- QUESTION -->
                 <div class="mb-4">
-
-                    <label asp-for="QuestionText"
-                           class="form-label fw-semibold">
+                    <label asp-for="QuestionText" class="form-label fw-semibold">
                         Question
                     </label>
-
                     <textarea asp-for="QuestionText"
                               class="form-control"
                               rows="4"
                               maxlength="1000"
                               placeholder="Enter the interview question"
                               required></textarea>
-
                     <div class="form-text">
-                        Enter a clear interview question.
-                        Maximum 1,000 characters.
+                        Enter a clear interview question. Maximum 1,000 characters.
                     </div>
-
-                    <span asp-validation-for="QuestionText"
-                          class="text-danger">
-                    </span>
-
+                    <span asp-validation-for="QuestionText" class="text-danger"></span>
                 </div>
 
                 <!-- SUGGESTED ANSWER -->
                 <div class="mb-4">
-
-                    <label asp-for="SuggestedAnswer"
-                           class="form-label fw-semibold">
+                    <label asp-for="SuggestedAnswer" class="form-label fw-semibold">
                         Suggested Answer
                     </label>
-
                     <textarea asp-for="SuggestedAnswer"
                               class="form-control"
                               rows="5"
                               maxlength="2000"
                               placeholder="Enter a suggested answer"></textarea>
-
                     <div class="form-text">
-                        Provide a suggested answer for
-                        interview preparation.
+                        Provide a suggested answer for interview preparation.
                         Maximum 2,000 characters.
                     </div>
-
-                    <span asp-validation-for="SuggestedAnswer"
-                          class="text-danger">
-                    </span>
-
+                    <span asp-validation-for="SuggestedAnswer" class="text-danger"></span>
                 </div>
 
                 <!-- DIFFICULTY LEVEL -->
                 <div class="mb-4">
-
-                    <label asp-for="DifficultyLevel"
-                           class="form-label fw-semibold">
+                    <label asp-for="DifficultyLevel" class="form-label fw-semibold">
                         Difficulty Level
                     </label>
-
-                    <select asp-for="DifficultyLevel"
-                            class="form-select">
-
-                        <option value="Beginner">
-                            Beginner
-                        </option>
-
-                        <option value="Intermediate">
-                            Intermediate
-                        </option>
-
-                        <option value="Advanced">
-                            Advanced
-                        </option>
-
+                    <select asp-for="DifficultyLevel" class="form-select">
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
                     </select>
-
-                    <span asp-validation-for="DifficultyLevel"
-                          class="text-danger">
-                    </span>
-
+                    <span asp-validation-for="DifficultyLevel" class="text-danger"></span>
                 </div>
 
                 <!-- ACTIVE STATUS -->
                 <div class="form-check mb-4">
-
-                    <input asp-for="IsActive"
-                           class="form-check-input" />
-
-                    <label asp-for="IsActive"
-                           class="form-check-label fw-semibold">
+                    <input asp-for="IsActive" class="form-check-input" />
+                    <label asp-for="IsActive" class="form-check-label fw-semibold">
                         Active Question
                     </label>
-
                 </div>
 
                 <!-- FORM ACTIONS -->
                 <div class="edit-question-actions d-flex gap-2 flex-wrap">
-
-                    <button type="submit"
-                            class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary">
                         Save Changes
                     </button>
 
                     <a asp-controller="AdminQuestions"
-                       asp-action="Index"
+                       asp-action="ByCategory"
+                       asp-route-id="@Model.InterviewCategoryId"
                        class="btn btn-outline-secondary">
                         Cancel
                     </a>
 
                 </div>
-
             </form>
-
         </div>
-
     </div>
-
 </div>
 
 @section Scripts {

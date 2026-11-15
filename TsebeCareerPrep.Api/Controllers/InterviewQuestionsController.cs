@@ -204,18 +204,36 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
+            // Prevent an existing question from being moved
+            // to another interview category.
+            if (request.InterviewCategoryId != question.InterviewCategoryId)
+            {
+                return BadRequest(new
+                {
+                    message =
+                        "This question belongs to its original interview category. " +
+                        "The category cannot be changed while editing."
+                });
+            }
+
             var categoryExists = await _context.InterviewCategories
                 .AnyAsync(c =>
                     c.Id == request.InterviewCategoryId &&
                     c.IsActive);
 
-            if (!categoryExists)
+
+            // A question must remain in its original category.
+            // Reject attempts to move it to another category.
+            if (request.InterviewCategoryId != question.InterviewCategoryId)
             {
                 return BadRequest(new
                 {
-                    message = "The selected interview category is invalid or inactive."
+                    message =
+                        "The interview category is locked. " +
+                        "A question cannot be moved to another category."
                 });
             }
+
 
             var validDifficultyLevels = new[]
             {
@@ -237,7 +255,6 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
-            question.InterviewCategoryId = request.InterviewCategoryId;
             question.QuestionText = request.QuestionText.Trim();
             question.SuggestedAnswer = request.SuggestedAnswer?.Trim();
             question.DifficultyLevel = difficulty;

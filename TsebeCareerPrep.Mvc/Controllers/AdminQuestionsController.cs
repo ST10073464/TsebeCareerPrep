@@ -468,6 +468,7 @@ namespace TsebeCareerPrep.Mvc.Controllers
                 if (question == null)
                     return NotFound("Interview question not found.");
 
+
                 var model = new EditInterviewQuestionViewModel
                 {
                     Id = question.Id,
@@ -478,13 +479,18 @@ namespace TsebeCareerPrep.Mvc.Controllers
                     IsActive = question.IsActive
                 };
 
+                // Load the current interview categories dynamically.
+                // Include the question's existing category even if inactive.
+                await LoadCategoriesAsync(model.InterviewCategoryId);
+
                 return View(model);
+
             }
         }
 
         // =====================================================
         // POST: /AdminQuestions/Edit/10
-        // Validate and update an existing question.
+        // Update a question without allowing category transfers.
         // =====================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -495,67 +501,76 @@ namespace TsebeCareerPrep.Mvc.Controllers
             if (id <= 0 || id != model.Id)
                 return BadRequest("Invalid question ID.");
 
-            if (!ModelState.IsValid)
-                return View(model);
-
-            var allowedDifficulties = new[]
-            {
-                "Beginner",
-                "Intermediate",
-                "Advanced"
-            };
-
-            var difficulty = model.DifficultyLevel?.Trim();
-
-            if (!allowedDifficulties.Contains(
-                difficulty,
-                StringComparer.OrdinalIgnoreCase))
-            {
-                ModelState.AddModelError(
-                    nameof(model.DifficultyLevel),
-                    "Please select a valid difficulty level.");
-
-                return View(model);
-            }
-
-            model.DifficultyLevel = allowedDifficulties
-                .First(value => value.Equals(
-                    difficulty,
-                    StringComparison.OrdinalIgnoreCase));
-
-            model.QuestionText = model.QuestionText.Trim();
-            model.SuggestedAnswer = model.SuggestedAnswer?.Trim();
-
             var client = _httpClientFactory.CreateClient(
                 "AuthenticatedInterviewApi");
 
-            HttpResponseMessage response;
-
+            // Always obtain the category from the existing question,
+            // rather than trusting the category ID submitted by the browser.
             try
             {
-                response = await client.PutAsJsonAsync(
-                    $"api/InterviewQuestions/admin/{id}",
-                    model);
-            }
-            catch (HttpRequestException)
-            {
-                ModelState.AddModelError(
-                    string.Empty,
-                    "The interview API is unavailable. Please try again.");
+                using var lookupResponse = await client.GetAsync(
+                    "api/InterviewQuestions/admin/all");
 
-                return View(model);
-            }
-            catch (TaskCanceledException)
-            {
-                ModelState.AddModelError(
-                    string.Empty,
-                    "The request timed out. Please try again.");
+                if (lookupResponse.StatusCode == HttpStatusCode.Unauthorized)
+                    return Challenge();
 
-                return View(model);
-            }
+                if (lookupResponse.StatusCode == HttpStatusCode.Forbidden)
+                    return Forbid();
 
-            using (response)
-            {
+                if (!lookupResponse.IsSuccessStatusCode)
+                    return StatusCode(
+                        (int)lookupResponse.StatusCode,
+                        "Unable to verify the question's original category.");
+
+                var questions = await lookupResponse.Content
+                    .ReadFromJsonAsync<List<InterviewQuestionViewModel>>()
+                    ?? new List<InterviewQuestionViewModel>();
+
+                var existingQuestion = questions.FirstOrDefault(q => q.Id == id);
+                if (existingQuestion == null)
+                    return NotFound("Interview question not found.");
+
+                int originalCategoryId = existingQuestion.InterviewCategoryId;
+                await LoadCategoriesAsync(originalCategoryId);
+
+                if (model.InterviewCategoryId != originalCategoryId)
+                {
+                    // Restore the correct category when redisplaying the form.
+                    model.InterviewCategoryId = originalCategoryId;
+                    ModelState.Remove(nameof(model.InterviewCategoryId));
+                    ModelState.AddModelError(
+                        nameof(model.InterviewCategoryId),
+                        "The interview category is locked. A question cannot be moved to another category.");
+                    return View(model);
+                }
+
+                if (!ModelState.IsValid)
+                    return View(model);
+
+                var allowedDifficulties = new[]
+                {
+                    "Beginner", "Intermediate", "Advanced"
+                };
+
+                var difficulty = model.DifficultyLevel?.Trim();
+                if (!allowedDifficulties.Contains(
+                    difficulty, StringComparer.OrdinalIgnoreCase))
+                {
+                    ModelState.AddModelError(
+                        nameof(model.DifficultyLevel),
+                        "Please select a valid difficulty level.");
+                    return View(model);
+                }
+
+                model.DifficultyLevel = allowedDifficulties.First(value =>
+                    value.Equals(difficulty, StringComparison.OrdinalIgnoreCase));
+                model.QuestionText = model.QuestionText?.Trim() ?? string.Empty;
+                model.SuggestedAnswer = model.SuggestedAnswer?.Trim();
+                model.InterviewCategoryId = originalCategoryId;
+
+                using var response = await client.PutAsJsonAsync(
+                    $"api/InterviewQuestions/admin/{id}", model);
+
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                     return Challenge();
 
@@ -568,9 +583,11 @@ namespace TsebeCareerPrep.Mvc.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     TempData["SuccessMessage"] =
-                        "Interview question updated successfully.";
+                        $"Interview question #{model.Id} updated successfully.";
 
-                    return RedirectToAction(nameof(Index));
+                    return RedirectToAction(
+                        nameof(ByCategory),
+                        new { id = originalCategoryId });
                 }
 
                 if (response.StatusCode == HttpStatusCode.BadRequest)
@@ -578,15 +595,34 @@ namespace TsebeCareerPrep.Mvc.Controllers
                     await AddApiValidationErrorAsync(
                         response,
                         "Please check the question details and try again.");
-
                     return View(model);
                 }
 
                 ModelState.AddModelError(
                     string.Empty,
                     "Unable to update the interview question. Please try again.");
-
                 return View(model);
+            }
+            catch (HttpRequestException)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "The interview API is unavailable. Please try again.");
+                await LoadCategoriesAsync(model.InterviewCategoryId);
+                return View(model);
+            }
+            catch (TaskCanceledException)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "The request timed out. Please try again.");
+                await LoadCategoriesAsync(model.InterviewCategoryId);
+                return View(model);
+            }
+            catch (JsonException)
+            {
+                return StatusCode(
+                    502, "The interview API returned an invalid response.");
             }
         }
 
