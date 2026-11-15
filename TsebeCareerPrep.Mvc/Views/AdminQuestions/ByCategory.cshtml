@@ -1,4 +1,4 @@
-﻿@model List<TsebeCareerPrep.Mvc.Models.InterviewQuestionViewModel>
+@model List<TsebeCareerPrep.Mvc.Models.InterviewQuestionViewModel>
 
 @{
     ViewData["Title"] = "Category Questions";
@@ -231,7 +231,18 @@
                     <div id="difficultyFilterHelp" class="form-text">
                         Combine this filter with the question search above.
                     </div>
-                    <div id="questionSearchCount" class="small text-muted mt-2"
+                    <label for="statusFilter" class="form-label fw-semibold mt-3">
+    Filter by Status
+</label>
+<select id="statusFilter" class="form-select">
+    <option value="">All Statuses</option>
+    <option value="active">Active</option>
+    <option value="inactive">Inactive</option>
+</select>
+<div class="form-text mb-2">
+    Combine status, difficulty and question search.
+</div>
+<div id="questionSearchCount" class="small text-muted mt-2"
                          role="status" aria-live="polite">
                         Showing @totalQuestions of @totalQuestions questions
                     </div>
@@ -274,7 +285,7 @@
                                     <tr class="searchable-question @(newQuestionId == question.Id ? "new-question-highlight" : "")"
                                         data-question-id="@question.Id"
                                         data-question-text="@question.QuestionText"
-                                        data-question-difficulty="@question.DifficultyLevel">
+                                        data-question-difficulty="@question.DifficultyLevel" data-question-status="@(question.IsActive ? "active" : "inactive")">
                                         <td>
                                             @question.Id
                                             @if (newQuestionId == question.Id)
@@ -346,7 +357,7 @@
                             <div class="col-12 searchable-question"
                                  data-question-id="@question.Id"
                                  data-question-text="@question.QuestionText"
-                                 data-question-difficulty="@question.DifficultyLevel">
+                                 data-question-difficulty="@question.DifficultyLevel" data-question-status="@(question.IsActive ? "active" : "inactive")">
 
                                 <div class="card shadow-sm h-100 @(newQuestionId == question.Id ? "new-question-card" : "")">
                                     <div class="card-body p-3">
@@ -584,9 +595,10 @@
     document.addEventListener("DOMContentLoaded", function () {
         const searchInput = document.getElementById("questionSearch");
         const difficultyFilter = document.getElementById("difficultyFilter");
+        const statusFilter = document.getElementById("statusFilter");
         const searchCount = document.getElementById("questionSearchCount");
         const emptyMessage = document.getElementById("questionSearchEmpty");
-        if (!searchInput || !difficultyFilter || !searchCount || !emptyMessage) return;
+        if (!searchInput || !difficultyFilter || !statusFilter || !searchCount || !emptyMessage) return;
 
         const desktopRows = Array.from(
             document.querySelectorAll("tr.searchable-question"));
@@ -609,13 +621,16 @@
         function filterQuestions() {
             const term = searchInput.value.trim().toLowerCase();
             const selectedDifficulty = difficultyFilter.value.toLowerCase();
+            const selectedStatus = statusFilter.value.toLowerCase();
             let visibleQuestions = 0;
 
             function matchesFilters(element) {
                 const matchesText = matchesQuestion(element, term);
                 const questionDifficulty = (element.dataset.questionDifficulty || "").toLowerCase();
                 const matchesDifficulty = !selectedDifficulty || questionDifficulty === selectedDifficulty;
-                return matchesText && matchesDifficulty;
+                const questionStatus = (element.dataset.questionStatus || "").toLowerCase();
+                const matchesStatus = !selectedStatus || questionStatus === selectedStatus;
+                return matchesText && matchesDifficulty && matchesStatus;
             }
 
             desktopRows.forEach(function (row) {
@@ -635,5 +650,6 @@
 
         searchInput.addEventListener("input", filterQuestions);
         difficultyFilter.addEventListener("change", filterQuestions);
+        statusFilter.addEventListener("change", filterQuestions);
     });
 </script>
