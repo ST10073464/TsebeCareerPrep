@@ -5,6 +5,8 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using TsebeCareerPrep.Mvc.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using TsebeCareerPrep.Mvc.Services;
 
 namespace TsebeCareerPrep.Mvc.Controllers
 {
@@ -12,12 +14,125 @@ namespace TsebeCareerPrep.Mvc.Controllers
     public class AdminQuestionsController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly InterviewCategoryService _categoryService;
 
         public AdminQuestionsController(
-            IHttpClientFactory httpClientFactory)
+            IHttpClientFactory httpClientFactory,
+            InterviewCategoryService categoryService)
         {
             _httpClientFactory = httpClientFactory;
+            _categoryService = categoryService;
         }
+
+
+        // =====================================================
+        // GET: /AdminQuestions/ByCategory/1
+        // Display questions belonging to one category.
+        // =====================================================
+        [HttpGet]
+        public async Task<IActionResult> ByCategory(int id)
+        {
+            if (id <= 0)
+            {
+                return BadRequest("Invalid category ID.");
+            }
+
+            var client = _httpClientFactory.CreateClient(
+                "AuthenticatedInterviewApi");
+
+            try
+            {
+                using var categoryResponse = await client.GetAsync(
+                    "api/InterviewCategories/admin/all");
+
+                if (categoryResponse.StatusCode ==
+                    HttpStatusCode.Unauthorized)
+                    return Challenge();
+
+                if (categoryResponse.StatusCode ==
+                    HttpStatusCode.Forbidden)
+                    return Forbid();
+
+                if (!categoryResponse.IsSuccessStatusCode)
+                {
+                    return StatusCode(
+                        (int)categoryResponse.StatusCode,
+                        "Unable to retrieve interview categories.");
+                }
+
+                var categories = await categoryResponse.Content
+                    .ReadFromJsonAsync<
+                        List<InterviewCategoryAdminViewModel>>()
+                    ?? new List<InterviewCategoryAdminViewModel>();
+
+                var category = categories.FirstOrDefault(
+                    c => c.Id == id);
+
+                if (category == null)
+                {
+                    return NotFound("Interview category not found.");
+                }
+
+                using var questionResponse = await client.GetAsync(
+                    "api/InterviewQuestions/admin/all");
+
+                if (questionResponse.StatusCode ==
+                    HttpStatusCode.Unauthorized)
+                    return Challenge();
+
+                if (questionResponse.StatusCode ==
+                    HttpStatusCode.Forbidden)
+                    return Forbid();
+
+                if (!questionResponse.IsSuccessStatusCode)
+                {
+                    return StatusCode(
+                        (int)questionResponse.StatusCode,
+                        "Unable to retrieve interview questions.");
+                }
+
+                var questions = await questionResponse.Content
+                    .ReadFromJsonAsync<
+                        List<InterviewQuestionViewModel>>()
+                    ?? new List<InterviewQuestionViewModel>();
+
+                var categoryQuestions = questions
+                    .Where(q => q.InterviewCategoryId == id)
+                    .OrderBy(q => q.Id)
+                    .ToList();
+
+                foreach (var question in categoryQuestions)
+                {
+                    question.InterviewCategoryName = category.Name;
+                }
+
+                ViewBag.CategoryId = category.Id;
+                ViewBag.CategoryName = category.Name;
+                ViewBag.CategoryDescription = category.Description;
+                ViewBag.CategoryIsActive = category.IsActive;
+
+                return View("ByCategory", categoryQuestions);
+            }
+            catch (HttpRequestException)
+            {
+                return StatusCode(
+                    503,
+                    "The interview API is currently unavailable.");
+            }
+            catch (TaskCanceledException)
+            {
+                return StatusCode(
+                    504,
+                    "The interview API request timed out.");
+            }
+            catch (JsonException)
+            {
+                return StatusCode(
+                    502,
+                    "The interview API returned an invalid response.");
+            }
+        }
+
 
         // =====================================================
         // GET: /AdminQuestions
@@ -68,12 +183,33 @@ namespace TsebeCareerPrep.Mvc.Controllers
                         "Unable to retrieve interview questions.");
                 }
 
+
                 var questions = await response.Content
                     .ReadFromJsonAsync<
-                        List<InterviewQuestionViewModel>>();
+                        List<InterviewQuestionViewModel>>()
+                    ?? new List<InterviewQuestionViewModel>();
 
-                return View(questions ??
-                    new List<InterviewQuestionViewModel>());
+                // Retrieve the interview categories from the API.
+                var categories =
+                    await _categoryService.GetCategoriesAsync();
+
+                // Match each question to its category name.
+                var categoryLookup = categories.ToDictionary(
+                    category => category.Id,
+                    category => category.Name);
+
+                foreach (var question in questions)
+                {
+                    question.InterviewCategoryName =
+                        categoryLookup.TryGetValue(
+                            question.InterviewCategoryId,
+                            out var categoryName)
+                        ? categoryName
+                        : $"Unknown Category ({question.InterviewCategoryId})";
+                }
+
+                return View(questions);
+
             }
         }
 
@@ -81,12 +217,35 @@ namespace TsebeCareerPrep.Mvc.Controllers
         // GET: /AdminQuestions/Create
         // Display the Create Interview Question form.
         // =====================================================
+
+
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create(int? categoryId)
         {
-            return View(
-                new CreateInterviewQuestionViewModel());
+            // Only accept a positive category ID from the URL.
+            int? selectedCategoryId =
+                categoryId.HasValue && categoryId.Value > 0
+                    ? categoryId.Value
+                    : null;
+
+            // Load categories with the appropriate selection.
+            await LoadCategoriesAsync(selectedCategoryId);
+
+            var model = new CreateInterviewQuestionViewModel
+            {
+                // Zero represents no category selected.
+                InterviewCategoryId = selectedCategoryId ?? 0
+            };
+
+            // Prevent a previous category selection from
+            // overriding the model on this GET request.
+            ModelState.Remove(
+                nameof(CreateInterviewQuestionViewModel.InterviewCategoryId));
+
+            return View(model);
         }
+
+
 
         // =====================================================
         // POST: /AdminQuestions/Create
@@ -97,6 +256,25 @@ namespace TsebeCareerPrep.Mvc.Controllers
         public async Task<IActionResult> Create(
             CreateInterviewQuestionViewModel model)
         {
+
+            await LoadCategoriesAsync(model.InterviewCategoryId);
+
+            // Verify the submitted category against the available
+            // interview categories before sending it to the API.
+            var categories = await _categoryService.GetCategoriesAsync();
+
+            var selectedCategory = categories.FirstOrDefault(
+                category =>
+                    category.Id == model.InterviewCategoryId &&
+                    category.IsActive);
+
+            if (selectedCategory == null)
+            {
+                ModelState.AddModelError(
+                    nameof(model.InterviewCategoryId),
+                    "Please select a valid, active interview category.");
+            }
+
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -168,10 +346,38 @@ namespace TsebeCareerPrep.Mvc.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["SuccessMessage"] =
-                        "Interview question created successfully.";
+                    int? newQuestionId = null;
 
-                    return RedirectToAction(nameof(Index));
+                    try
+                    {
+                        using var document = JsonDocument.Parse(
+                            await response.Content.ReadAsStringAsync());
+
+                        if (document.RootElement.TryGetProperty(
+                                "id", out var idProperty) &&
+                            idProperty.ValueKind == JsonValueKind.Number &&
+                            idProperty.TryGetInt32(out var createdId))
+                        {
+                            newQuestionId = createdId;
+                        }
+                    }
+                    catch (JsonException)
+                    {
+                        // The API has already created the question.
+                        // Continue without highlighting if its ID is unreadable.
+                    }
+
+                    TempData["SuccessMessage"] =
+                        $"Interview question created successfully in {selectedCategory!.Name}.";
+
+                    if (newQuestionId.HasValue)
+                    {
+                        TempData["NewQuestionId"] = newQuestionId.Value;
+                    }
+
+                    return RedirectToAction(
+                        nameof(ByCategory),
+                        new { id = model.InterviewCategoryId });
                 }
 
                 if (response.StatusCode == HttpStatusCode.BadRequest)
@@ -424,6 +630,34 @@ namespace TsebeCareerPrep.Mvc.Controllers
             }
 
             ModelState.AddModelError(string.Empty, errorMessage);
+        }
+
+        // =====================================================
+        // Load interview categories dynamically for dropdowns.
+        // Include the currently selected inactive category
+        // when editing an existing question.
+        // =====================================================
+        private async Task LoadCategoriesAsync(
+            int? selectedCategoryId = null)
+        {
+            var categories =
+                await _categoryService.GetCategoriesAsync();
+
+            ViewBag.Categories = categories
+                .Where(category =>
+                    category.IsActive ||
+                    category.Id == selectedCategoryId)
+                .OrderBy(category => category.Name)
+                .Select(category => new SelectListItem
+                {
+                    Value = category.Id.ToString(),
+                    Text = category.IsActive
+                        ? category.Name
+                        : $"{category.Name} (Inactive)",
+                    Selected = category.Id == selectedCategoryId
+                })
+
+                .ToList();
         }
     }
 }

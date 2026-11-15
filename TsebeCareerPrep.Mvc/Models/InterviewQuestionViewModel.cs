@@ -15,6 +15,11 @@ namespace TsebeCareerPrep.Mvc.Models
 
         public bool IsActive { get; set; }
 
+        // Existing category relationship
         public int InterviewCategoryId { get; set; }
+
+        // Display name of the category
+        public string InterviewCategoryName { get; set; }
+            = string.Empty;
     }
 }

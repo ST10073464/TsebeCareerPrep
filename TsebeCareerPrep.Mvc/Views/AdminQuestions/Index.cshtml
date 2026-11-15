@@ -2,14 +2,23 @@
 
 @{
     ViewData["Title"] = "Manage Interview Questions";
+
+    var questions = Model
+        .OrderBy(q => q.InterviewCategoryId)
+        .ThenBy(q => q.Id)
+        .ToList();
 }
 
 <div class="container py-5">
 
     <!-- PAGE HEADER -->
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div class="d-flex justify-content-between
+        align-items-start flex-wrap gap-3 mb-4">
+
         <div>
-            <h1 class="fw-bold">Manage Interview Questions</h1>
+            <h1 class="fw-bold">
+                Manage Interview Questions
+            </h1>
 
             <p class="text-muted mb-0">
                 View and manage the interview question bank.
@@ -26,23 +35,27 @@
     <!-- SUCCESS NOTIFICATION -->
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success" role="alert">
+        <div class="alert alert-success"
+             role="alert">
             @TempData["SuccessMessage"]
         </div>
     }
 
     <!-- QUESTION BANK -->
     <div class="card shadow-sm">
-        <div class="card-body p-4">
+        <div class="card-body p-3 p-md-4">
 
             <!-- QUESTION BANK HEADER -->
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+            <div class="d-flex justify-content-between
+                align-items-center flex-wrap gap-3 mb-4">
 
                 <div>
-                    <h4 class="fw-bold mb-1">Question Bank</h4>
+                    <h4 class="fw-bold mb-1">
+                        Question Bank
+                    </h4>
 
                     <span class="badge bg-primary">
-                        @Model.Count Questions
+                        @questions.Count Questions
                     </span>
                 </div>
 
@@ -51,109 +64,270 @@
                    class="btn btn-primary">
                     + Create Question
                 </a>
-
             </div>
 
-            <!-- QUESTION TABLE -->
-            @if (Model.Count == 0)
+            @if (questions.Count == 0)
             {
                 <div class="alert alert-info">
-                    No interview questions have been created yet.
+                    No interview questions have been
+                    created yet.
                 </div>
             }
             else
             {
-                <div class="table-responsive">
+                <!-- DESKTOP / TABLET TABLE -->
+                <div class="d-none d-lg-block">
 
-                    <table class="table table-hover align-middle">
+                    <div class="table-responsive">
+                        <table class="table table-hover
+                            align-middle">
 
-                        <thead class="table-light">
-                            <tr>
-                                <th>ID</th>
-                                <th>Question</th>
-                                <th>Category ID</th>
-                                <th>Difficulty</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            @foreach (var question in Model
-                                .OrderBy(q => q.InterviewCategoryId)
-                                .ThenBy(q => q.Id))
-                            {
+                            <thead class="table-light">
                                 <tr>
+                                    <th>ID</th>
+                                    <th>Question</th>
+                                    <th>Category</th>
+                                    <th>Difficulty</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
 
-                                    <!-- QUESTION ID -->
-                                    <td>
-                                        @question.Id
-                                    </td>
+                            <tbody>
+                                @foreach (var question in questions)
+                                {
+                                    <tr>
+                                        <td>
+                                            @question.Id
+                                        </td>
 
-                                    <!-- QUESTION AND SUGGESTED ANSWER -->
-                                    <td>
-                                        <div class="fw-semibold">
-                                            @question.QuestionText
+                                        <td>
+                                            <div class="fw-semibold">
+                                                @question.QuestionText
+                                            </div>
+
+                                            @if (!string.IsNullOrWhiteSpace(
+                                                question.SuggestedAnswer))
+                                            {
+                                                <div class="text-muted small mt-1">
+                                                    <strong>
+                                                        Suggested answer:
+                                                    </strong>
+                                                    @question.SuggestedAnswer
+                                                </div>
+                                            }
+                                        </td>
+
+                                        <td>
+                                            @question.InterviewCategoryName
+                                        </td>
+
+                                        <td>
+                                            <span class="badge bg-secondary">
+                                                @question.DifficultyLevel
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            @if (question.IsActive)
+                                            {
+                                                <span class="badge bg-success">
+                                                    Active
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger">
+                                                    Inactive
+                                                </span>
+                                            }
+                                        </td>
+
+                                        <td>
+                                            <a asp-controller="AdminQuestions"
+                                               asp-action="Edit"
+                                               asp-route-id="@question.Id"
+                                               class="btn btn-sm btn-outline-primary">
+                                                Edit
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- MOBILE QUESTION CARDS -->
+                <div class="d-lg-none">
+
+                    <div class="row g-3">
+
+                        @foreach (var question in questions)
+                        {
+                            var answerId =
+                                $"question-answer-{question.Id}";
+
+                            <div class="col-12">
+
+                                <div class="card shadow-sm h-100">
+
+                                    <div class="card-body p-3">
+
+                                        <!-- QUESTION HEADER -->
+                                        <div class="d-flex
+                                            justify-content-between
+                                            align-items-start
+                                            gap-2 mb-3">
+
+                                            <span class="badge bg-primary">
+                                                Question #@question.Id
+                                            </span>
+
+                                            @if (question.IsActive)
+                                            {
+                                                <span class="badge bg-success">
+                                                    Active
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger">
+                                                    Inactive
+                                                </span>
+                                            }
                                         </div>
 
+                                        <!-- QUESTION TEXT -->
+                                        <h5 class="fw-bold mb-3">
+                                            @question.QuestionText
+                                        </h5>
+
+                                        <!-- QUESTION DETAILS -->
+                                        <div class="d-flex flex-wrap
+                                            align-items-center
+                                            gap-2 mb-3">
+
+                                            <span class="badge bg-light
+                                                text-dark border">
+                                                @question.InterviewCategoryName
+                                            </span>
+
+                                            <span class="badge bg-secondary">
+                                                @question.DifficultyLevel
+                                            </span>
+                                        </div>
+
+                                        <!-- EXPANDABLE SUGGESTED ANSWER -->
                                         @if (!string.IsNullOrWhiteSpace(
                                             question.SuggestedAnswer))
                                         {
-                                            <div class="text-muted small mt-1">
-                                                <strong>Suggested answer:</strong>
-                                                @question.SuggestedAnswer
+                                            <div class="mb-3">
+
+                                                <button class="btn btn-sm
+                                                    btn-outline-secondary"
+                                                        type="button"
+                                                        data-bs-toggle="collapse"
+                                                        data-bs-target="#@answerId"
+                                                        aria-expanded="false"
+                                                        aria-controls="@answerId">
+
+                                                    <span class="answer-show-label">
+                                                        Show Answer
+                                                    </span>
+
+                                                    <span class="answer-hide-label">
+                                                        Hide Answer
+                                                    </span>
+
+                                                </button>
+
+                                                <div class="collapse mt-3"
+                                                     id="@answerId">
+
+                                                    <div class="bg-light
+                                                        border rounded
+                                                        p-3">
+
+                                                        <div class="fw-semibold mb-2">
+                                                            Suggested Answer
+                                                        </div>
+
+                                                        <p class="text-muted
+                                                            small mb-0">
+                                                            @question.SuggestedAnswer
+                                                        </p>
+
+                                                    </div>
+                                                </div>
+
                                             </div>
                                         }
-                                    </td>
 
-                                    <!-- CATEGORY -->
-                                    <td>
-                                        @question.InterviewCategoryId
-                                    </td>
+                                        <!-- EDIT ACTION -->
+                                        <div class="d-grid">
 
-                                    <!-- DIFFICULTY -->
-                                    <td>
-                                        <span class="badge bg-secondary">
-                                            @question.DifficultyLevel
-                                        </span>
-                                    </td>
+                                            <a asp-controller="AdminQuestions"
+                                               asp-action="Edit"
+                                               asp-route-id="@question.Id"
+                                               class="btn btn-primary">
 
-                                    <!-- STATUS -->
-                                    <td>
-                                        @if (question.IsActive)
-                                        {
-                                            <span class="badge bg-success">
-                                                Active
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-danger">
-                                                Inactive
-                                            </span>
-                                        }
-                                    </td>
+                                                Edit Question
 
-                                    <!-- ACTIONS -->
-                                    <td>
-                                        <a asp-controller="AdminQuestions"
-                                           asp-action="Edit"
-                                           asp-route-id="@question.Id"
-                                           class="btn btn-sm btn-outline-primary">
-                                            Edit
-                                        </a>
-                                    </td>
+                                            </a>
 
-                                </tr>
-                            }
-                        </tbody>
+                                        </div>
 
-                    </table>
+                                    </div>
+                                </div>
 
+                            </div>
+                        }
+
+                    </div>
                 </div>
             }
 
         </div>
     </div>
-
 </div>
+
+<!-- MOBILE PAGE STYLES -->
+<style>
+    /* Prevent long question text from overflowing */
+    .card-body h5,
+    .card-body p {
+        overflow-wrap: anywhere;
+    }
+
+    /* Toggle answer button labels */
+    .answer-hide-label {
+        display: none;
+    }
+
+    button[aria-expanded="true"] .answer-show-label {
+        display: none;
+    }
+
+    button[aria-expanded="true"] .answer-hide-label {
+        display: inline;
+    }
+
+    /* Mobile adjustments */
+    @@media (max-width: 991.98px) {
+
+        .card-body h5 {
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+
+        .card-body .badge {
+            white-space: normal;
+            text-align: left;
+        }
+
+        .card-body .btn {
+            max-width: 100%;
+        }
+    }
+</style>

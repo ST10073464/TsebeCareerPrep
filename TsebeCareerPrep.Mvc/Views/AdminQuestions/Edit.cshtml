@@ -4,23 +4,96 @@
     ViewData["Title"] = "Edit Interview Question";
 }
 
-<div class="container py-5">
+<style>
+    .edit-question-page {
+        max-width: 1140px;
+        margin: 0 auto;
+    }
 
+    .edit-question-card {
+        max-width: 850px;
+        margin: 0 auto;
+        border-radius: 6px;
+    }
+
+    .edit-question-page .form-control,
+    .edit-question-page .form-select {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .edit-question-page textarea {
+        resize: vertical;
+    }
+
+    .edit-question-page .form-control:focus,
+    .edit-question-page .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13,110,253,.15);
+    }
+
+    .edit-question-page .form-text {
+        font-size: 0.85rem;
+    }
+
+    @@media (max-width: 767.98px) {
+        .edit-question-page {
+            padding-top: 1.5rem !important;
+            padding-bottom: 6rem !important;
+        }
+
+            .edit-question-page h1 {
+                font-size: 1.55rem;
+                line-height: 1.3;
+            }
+
+        .edit-question-card .card-body {
+            padding: 1rem !important;
+        }
+
+        .edit-question-page .form-control,
+        .edit-question-page .form-select {
+            font-size: 16px;
+        }
+
+        .edit-question-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+            .edit-question-actions .btn {
+                width: 100%;
+                min-height: 44px;
+            }
+    }
+</style>
+
+<div class="container py-5 edit-question-page">
+
+    <!-- PAGE HEADER -->
     <div class="mb-4">
+
         <a asp-controller="AdminQuestions"
            asp-action="Index"
            class="btn btn-outline-secondary mb-3">
             Back to Question Bank
         </a>
 
-        <h1 class="fw-bold">Edit Interview Question</h1>
+        <h1 class="fw-bold mb-2">
+            Edit Interview Question
+        </h1>
 
-        <p class="text-muted">
-            Update question #@Model.Id in the interview question bank.
+        <p class="text-muted mb-0">
+            Update question #@Model.Id in the
+            interview question bank.
         </p>
+
     </div>
 
-    <div class="card shadow-sm">
+    <!-- EDIT FORM -->
+    <div class="card shadow-sm edit-question-card">
+
         <div class="card-body p-4">
 
             <form asp-controller="AdminQuestions"
@@ -32,91 +105,158 @@
 
                 <input asp-for="Id" type="hidden" />
 
+                <!-- VALIDATION -->
                 <div asp-validation-summary="All"
-                     class="text-danger mb-3"></div>
+                     class="text-danger mb-3">
+                </div>
 
-                <div class="mb-3">
+                <!-- INTERVIEW CATEGORY -->
+                <div class="mb-4">
+
                     <label asp-for="InterviewCategoryId"
                            class="form-label fw-semibold">
+                        Interview Category
                     </label>
 
                     <select asp-for="InterviewCategoryId"
-                            class="form-select">
+                            class="form-select"
+                            required>
+
                         <option value="0">
                             Select an interview category
                         </option>
+
                         <option value="1">
                             Software Development
                         </option>
+
                         <option value="2">
                             Administration
                         </option>
-                        <option value="3">
-                            Finance
-                        </option>
+
                         <option value="4">
                             Management
                         </option>
+
+                        <option value="6">
+                            Finance
+                        </option>
+
+                        <option value="7">
+                            Human Resources
+                        </option>
+
+                        <option value="8">
+                            Customer Service
+                        </option>
+
                     </select>
 
                     <span asp-validation-for="InterviewCategoryId"
-                          class="text-danger"></span>
+                          class="text-danger">
+                    </span>
+
                 </div>
 
-                <div class="mb-3">
+                <!-- QUESTION -->
+                <div class="mb-4">
+
                     <label asp-for="QuestionText"
                            class="form-label fw-semibold">
+                        Question
                     </label>
 
                     <textarea asp-for="QuestionText"
                               class="form-control"
                               rows="4"
-                              maxlength="1000"></textarea>
+                              maxlength="1000"
+                              placeholder="Enter the interview question"
+                              required></textarea>
+
+                    <div class="form-text">
+                        Enter a clear interview question.
+                        Maximum 1,000 characters.
+                    </div>
 
                     <span asp-validation-for="QuestionText"
-                          class="text-danger"></span>
+                          class="text-danger">
+                    </span>
+
                 </div>
 
-                <div class="mb-3">
+                <!-- SUGGESTED ANSWER -->
+                <div class="mb-4">
+
                     <label asp-for="SuggestedAnswer"
                            class="form-label fw-semibold">
+                        Suggested Answer
                     </label>
 
                     <textarea asp-for="SuggestedAnswer"
                               class="form-control"
                               rows="5"
-                              maxlength="2000"></textarea>
+                              maxlength="2000"
+                              placeholder="Enter a suggested answer"></textarea>
+
+                    <div class="form-text">
+                        Provide a suggested answer for
+                        interview preparation.
+                        Maximum 2,000 characters.
+                    </div>
 
                     <span asp-validation-for="SuggestedAnswer"
-                          class="text-danger"></span>
+                          class="text-danger">
+                    </span>
+
                 </div>
 
-                <div class="mb-3">
+                <!-- DIFFICULTY LEVEL -->
+                <div class="mb-4">
+
                     <label asp-for="DifficultyLevel"
                            class="form-label fw-semibold">
+                        Difficulty Level
                     </label>
 
                     <select asp-for="DifficultyLevel"
                             class="form-select">
-                        <option value="Beginner">Beginner</option>
-                        <option value="Intermediate">Intermediate</option>
-                        <option value="Advanced">Advanced</option>
+
+                        <option value="Beginner">
+                            Beginner
+                        </option>
+
+                        <option value="Intermediate">
+                            Intermediate
+                        </option>
+
+                        <option value="Advanced">
+                            Advanced
+                        </option>
+
                     </select>
 
                     <span asp-validation-for="DifficultyLevel"
-                          class="text-danger"></span>
+                          class="text-danger">
+                    </span>
+
                 </div>
 
+                <!-- ACTIVE STATUS -->
                 <div class="form-check mb-4">
+
                     <input asp-for="IsActive"
                            class="form-check-input" />
 
                     <label asp-for="IsActive"
                            class="form-check-label fw-semibold">
+                        Active Question
                     </label>
+
                 </div>
 
-                <div class="d-flex gap-2 flex-wrap">
+                <!-- FORM ACTIONS -->
+                <div class="edit-question-actions d-flex gap-2 flex-wrap">
+
                     <button type="submit"
                             class="btn btn-primary">
                         Save Changes
@@ -127,12 +267,15 @@
                        class="btn btn-outline-secondary">
                         Cancel
                     </a>
+
                 </div>
 
             </form>
 
         </div>
+
     </div>
+
 </div>
 
 @section Scripts {
