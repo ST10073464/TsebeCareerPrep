@@ -297,23 +297,64 @@
                                 </p>
                             </div>
 
-                            <form asp-controller="InterviewSessions"
+                            <form id="completeInterviewForm"
+                                  asp-controller="InterviewSessions"
                                   asp-action="Complete"
                                   asp-route-id="@Model.SessionId"
-                                  method="post"
-                                  onsubmit="return confirm('You answered @answeredQuestions of @totalQuestions questions. @((totalQuestions - answeredQuestions)) question(s) remain unanswered. Are you sure you want to complete this interview? You cannot submit additional answers afterwards.');">
-
+                                  method="post">
                                 @Html.AntiForgeryToken()
-
-                                <button type="submit"
+                                <button type="button"
+                                        id="openCompleteInterviewDialog"
                                         class="btn btn-success"
                                         disabled="@(answeredQuestions == 0)">
                                     Complete Interview
                                 </button>
-
                             </form>
 
                         </div>
+
+                        <dialog id="completeInterviewDialog"
+                                aria-labelledby="completeInterviewTitle"
+                                aria-describedby="completeInterviewDescription"
+                                style="border:0;border-radius:14px;max-width:min(92vw,500px);width:100%;padding:0;box-shadow:0 16px 55px rgba(0,0,0,.25);">
+                            <div class="p-4">
+                                <h2 id="completeInterviewTitle" class="h4 fw-bold mb-3">
+                                    Complete this interview?
+                                </h2>
+                                <p id="completeInterviewDescription" class="mb-3">
+                                    You have answered <strong>@answeredQuestions of @totalQuestions</strong> questions.
+                                </p>
+                                @if (answeredQuestions < totalQuestions)
+                                {
+                                    <div class="alert alert-warning" role="note">
+                                        <strong>@(totalQuestions - answeredQuestions) question(s) remain unanswered.</strong>
+                                        You can return to them before completing.
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-success" role="note">
+                                        All questions have been answered.
+                                    </div>
+                                }
+                                <p class="text-muted small">
+                                    Completing the interview is final. You will not be able to submit additional answers.
+                                </p>
+                                <div class="d-flex flex-wrap justify-content-end gap-2 mt-4">
+                                    <button type="button" id="cancelCompleteInterview"
+                                            class="btn btn-outline-secondary"
+                                            disabled="@(totalQuestions > 0 && answeredQuestions == totalQuestions)"
+                                            title="@(totalQuestions > 0 && answeredQuestions == totalQuestions ? "All questions have been answered" : "Return to unanswered questions")">
+                                        Continue Interviewing
+                                    </button>
+                                    <button type="submit" form="completeInterviewForm"
+                                            id="confirmCompleteInterview"
+                                            class="btn btn-success">
+                                        Complete Interview
+                                    </button>
+                                </div>
+                            </div>
+                        </dialog>
 
                         @if (answeredQuestions == 0)
                         {
@@ -325,6 +366,51 @@
 
                     </div>
                 }
+
+                
+<!-- QUESTION OVERVIEW -->
+<div class="card shadow-sm mt-4 mb-3">
+    <div class="card-body">
+        <h3 class="h5 fw-bold mb-2">
+            Question Overview
+        </h3>
+
+        <p class="text-muted small mb-3">
+            Select a question number to jump directly to it.
+        </p>
+
+        <div class="d-flex flex-wrap gap-2"
+             id="interviewQuestionOverview"
+             role="group"
+             aria-label="Jump to an interview question">
+
+            @for (var i = 0; i < totalQuestions; i++)
+            {
+                var item = questions[i];
+
+                <button type="button"
+                        class="btn @(item.IsAnswered
+                            ? "btn-outline-success"
+                            : "btn-outline-secondary")"
+                        data-jump-index="@i"
+                        aria-label="Question @(i + 1), @(item.IsAnswered ? "answered" : "unanswered")">
+                    @(i + 1)
+                    @if (item.IsAnswered)
+                    {
+                        <span aria-hidden="true">&#10003;</span>
+                    }
+                </button>
+            }
+        </div>
+
+        <div class="d-flex flex-wrap gap-3 mt-3 small">
+            <span class="text-success">✓ Answered</span>
+            <span class="text-primary">● Current</span>
+            <span class="text-muted">○ Unanswered</span>
+        </div>
+    </div>
+</div>
+
 
 
                 <!-- QUESTION NAVIGATION -->
@@ -370,6 +456,31 @@
             asp-append-version="true"></script>
 
     <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const dialog = document.getElementById("completeInterviewDialog");
+            const openButton = document.getElementById("openCompleteInterviewDialog");
+            const cancelButton = document.getElementById("cancelCompleteInterview");
+            const completeForm = document.getElementById("completeInterviewForm");
+            const confirmButton = document.getElementById("confirmCompleteInterview");
+
+            if (dialog && openButton && cancelButton && completeForm && confirmButton) {
+                openButton.addEventListener("click", function () {
+                    dialog.showModal();
+                });
+                cancelButton.addEventListener("click", function () {
+                    dialog.close();
+                    openButton.focus();
+                });
+                dialog.addEventListener("click", function (event) {
+                    if (event.target === dialog) dialog.close();
+                });
+                completeForm.addEventListener("submit", function () {
+                    confirmButton.disabled = true;
+                    confirmButton.textContent = "Completing...";
+                });
+            }
+        });
+
         document.addEventListener("DOMContentLoaded", function () {
 
             const cards = Array.from(
@@ -480,8 +591,11 @@ else {
 }
 
 
-            function showQuestion(index) {
+            const overviewButtons = Array.from(document.querySelectorAll(
+                "#interviewQuestionOverview [data-jump-index]"
+            ));
 
+            function showQuestion(index) {
                 currentIndex = Math.min(
                     Math.max(index, 0),
                     cards.length - 1
@@ -489,6 +603,26 @@ else {
 
                 cards.forEach(function (card, position) {
                     card.hidden = position !== currentIndex;
+                });
+
+                overviewButtons.forEach(function (button) {
+                    const buttonIndex = Number(button.dataset.jumpIndex);
+                    const isCurrent = buttonIndex === currentIndex;
+                    const isAnswered =
+                        cards[buttonIndex]?.dataset.answered === "true";
+
+                    button.classList.toggle("btn-primary", isCurrent);
+                    button.classList.toggle(
+                        "btn-outline-success", !isCurrent && isAnswered
+                    );
+                    button.classList.toggle(
+                        "btn-outline-secondary", !isCurrent && !isAnswered
+                    );
+                    if (isCurrent) {
+                        button.setAttribute("aria-current", "step");
+                    } else {
+                        button.removeAttribute("aria-current");
+                    }
                 });
 
                 questionNumber.textContent =
@@ -525,6 +659,33 @@ else {
                 );
             }
 
+            
+document.querySelectorAll(
+    "#interviewQuestionOverview [data-jump-index]"
+).forEach(function (button) {
+    button.addEventListener("click", function () {
+        const index = Number(button.dataset.jumpIndex);
+
+        if (!Number.isInteger(index) ||
+            index < 0 ||
+            index >= cards.length) {
+            return;
+        }
+
+        showQuestion(index);
+
+        const activeCard = cards[index];
+
+        activeCard.scrollIntoView({
+            behavior: window.matchMedia(
+                "(prefers-reduced-motion: reduce)"
+            ).matches ? "auto" : "smooth",
+            block: "center"
+        });
+    });
+});
+
+
             previousButton.addEventListener("click", function () {
                 showQuestion(currentIndex - 1);
             });
@@ -533,7 +694,38 @@ else {
                 showQuestion(currentIndex + 1);
             });
 
-            showQuestion(currentIndex);
+           
+showQuestion(currentIndex);
+
+// After a successful answer submission, draw attention
+// to the next unanswered question.
+if (answeredQuestionId > 0 &&
+    cards[currentIndex].dataset.answered === "false") {
+
+    const nextQuestion = cards[currentIndex];
+
+    if (window.TsebeChangeHighlighter) {
+        window.TsebeChangeHighlighter.highlight(
+            nextQuestion,
+            "status"
+        );
+    } else {
+        nextQuestion.classList.add("tcp-highlight-status");
+
+        nextQuestion.scrollIntoView({
+            behavior: window.matchMedia(
+                "(prefers-reduced-motion: reduce)"
+            ).matches ? "auto" : "smooth",
+            block: "center"
+        });
+
+        window.setTimeout(function () {
+            nextQuestion.classList.remove(
+                "tcp-highlight-status"
+            );
+        }, 5000);
+    }
+}
 
         });
     </script>
