@@ -1,0 +1,651 @@
+@model List<TsebeCareerPrep.Mvc.Models.InterviewQuestionViewModel>
+
+@{
+    ViewData["Title"] = "Category Questions";
+
+    var questions = Model
+        ?? new List<TsebeCareerPrep.Mvc.Models.InterviewQuestionViewModel>();
+
+    int categoryId = ViewBag.CategoryId;
+    string categoryName = ViewBag.CategoryName ?? "Interview Category";
+    string categoryDescription = ViewBag.CategoryDescription ?? "";
+    bool categoryIsActive = ViewBag.CategoryIsActive ?? false;
+
+    int? newQuestionId = null;
+    if (int.TryParse(TempData["NewQuestionId"]?.ToString(), out var parsedNewQuestionId))
+    {
+        newQuestionId = parsedNewQuestionId;
+    }
+
+    bool hasNewQuestion = newQuestionId.HasValue &&
+        questions.Any(q => q.Id == newQuestionId.Value);
+
+    int totalQuestions = questions.Count;
+
+    int beginnerCount = questions.Count(q =>
+        string.Equals(q.DifficultyLevel, "Beginner",
+            StringComparison.OrdinalIgnoreCase));
+
+    int intermediateCount = questions.Count(q =>
+        string.Equals(q.DifficultyLevel, "Intermediate",
+            StringComparison.OrdinalIgnoreCase));
+
+    int advancedCount = questions.Count(q =>
+        string.Equals(q.DifficultyLevel, "Advanced",
+            StringComparison.OrdinalIgnoreCase));
+}
+
+<div class="container py-5">
+
+    
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success"
+             role="alert">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+
+    @if (hasNewQuestion)
+    {
+        <div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-3" role="status">
+            <span>New question #@newQuestionId has been highlighted below.</span>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-controller="AdminQuestions" asp-action="Create"
+                   asp-route-categoryId="@categoryId" class="btn btn-primary btn-sm">
+                    + Add Another Question
+                </a>
+                <a asp-controller="AdminQuestions" asp-action="Create"
+                   class="btn btn-outline-primary btn-sm">
+                    Change Category
+                </a>
+            </div>
+        </div>
+    }
+
+    <!-- PAGE HEADER -->
+    <div class="d-flex justify-content-between
+        align-items-start flex-wrap gap-3 mb-4">
+
+        <div>
+            <a asp-controller="AdminCategories"
+               asp-action="Index"
+               class="text-decoration-none small">
+                &larr; Back to Categories
+            </a>
+
+            <h1 class="fw-bold mt-3 mb-2">
+                @categoryName
+            </h1>
+
+            <p class="text-muted mb-2">
+                @categoryDescription
+            </p>
+
+            @if (categoryIsActive)
+            {
+                <span class="badge bg-success">
+                    Active Category
+                </span>
+            }
+            else
+            {
+                <span class="badge bg-secondary">
+                    Inactive Category
+                </span>
+            }
+        </div>
+
+        <a asp-controller="AdminQuestions"
+           asp-action="Create"
+           asp-route-categoryId="@categoryId"
+           class="btn btn-primary">
+            + Add Question
+        </a>
+
+    </div>
+
+   
+    <!-- QUESTION STATISTICS -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-3 p-md-4">
+
+            <h4 class="fw-bold mb-4">
+                Question Statistics
+            </h4>
+
+            <!-- TOTAL QUESTIONS -->
+            <div class="total-questions-panel mb-4">
+                <div class="text-muted fw-semibold mb-2">
+                    Total Questions
+                </div>
+
+                <div class="total-questions-number">
+                    @totalQuestions
+                </div>
+            </div>
+
+            <!-- DIFFICULTY BREAKDOWN -->
+            <h5 class="fw-bold mb-3">
+                Questions by Difficulty
+            </h5>
+
+            <div class="row g-3">
+
+                <div class="col-12 col-sm-4">
+                    <div class="difficulty-stat">
+                        <div class="difficulty-label">
+                            Beginner
+                        </div>
+
+                        <div class="difficulty-number">
+                            @beginnerCount
+                        </div>
+
+                        <div class="difficulty-caption">
+                            @(beginnerCount == 1 ? "Question" : "Questions")
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-sm-4">
+                    <div class="difficulty-stat">
+                        <div class="difficulty-label">
+                            Intermediate
+                        </div>
+
+                        <div class="difficulty-number">
+                            @intermediateCount
+                        </div>
+
+                        <div class="difficulty-caption">
+                            @(intermediateCount == 1 ? "Question" : "Questions")
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-sm-4">
+                    <div class="difficulty-stat">
+                        <div class="difficulty-label">
+                            Advanced
+                        </div>
+
+                        <div class="difficulty-number">
+                            @advancedCount
+                        </div>
+
+                        <div class="difficulty-caption">
+                            @(advancedCount == 1 ? "Question" : "Questions")
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- CATEGORY QUESTION BANK -->
+    <div class="card shadow-sm">
+        <div class="card-body p-3 p-md-4">
+
+            <div class="d-flex justify-content-between
+                align-items-center flex-wrap gap-2 mb-4">
+
+                <h4 class="fw-bold mb-0">
+                    Questions in @categoryName
+                </h4>
+
+                <span class="badge bg-primary">
+                    @totalQuestions Questions
+                </span>
+            </div>
+
+            @if (questions.Count > 0)
+            {
+                <div class="mb-4">
+                    <label for="questionSearch" class="form-label fw-semibold">
+                        Search Questions
+                    </label>
+                    <input type="search"
+                           id="questionSearch"
+                           class="form-control"
+                           placeholder="Search by question text or ID..."
+                           autocomplete="off"
+                           aria-describedby="questionSearchHelp" />
+                    <div id="questionSearchHelp" class="form-text">
+                        Search within this category only.
+                    </div>
+                    <label for="difficultyFilter" class="form-label fw-semibold mt-3">
+                        Filter by Difficulty
+                    </label>
+                    <select id="difficultyFilter" class="form-select"
+                            aria-describedby="difficultyFilterHelp">
+                        <option value="">All Difficulties</option>
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                    </select>
+                    <div id="difficultyFilterHelp" class="form-text">
+                        Combine this filter with the question search above.
+                    </div>
+                    <div id="questionSearchCount" class="small text-muted mt-2"
+                         role="status" aria-live="polite">
+                        Showing @totalQuestions of @totalQuestions questions
+                    </div>
+                </div>
+                <div id="questionSearchEmpty" class="alert alert-info d-none" role="status">
+                    No questions match your search.
+                </div>
+            }
+
+            @if (questions.Count == 0)
+            {
+                <div class="alert alert-info mb-0">
+                    No interview questions have been added
+                    to this category yet.
+                </div>
+            }
+            else
+            {
+                <!-- DESKTOP TABLE -->
+                <div class="d-none d-lg-block">
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered
+                            table-striped align-middle">
+
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Question</th>
+                                    <th>Suggested Answer</th>
+                                    <th>Difficulty</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach (var question in questions)
+                                {
+                                    <tr class="searchable-question @(newQuestionId == question.Id ? "new-question-highlight" : "")"
+                                        data-question-id="@question.Id"
+                                        data-question-text="@question.QuestionText"
+                                        data-question-difficulty="@question.DifficultyLevel">
+                                        <td>
+                                            @question.Id
+                                            @if (newQuestionId == question.Id)
+                                            {
+                                                <span class="badge bg-success ms-1">Newly Added</span>
+                                            }
+                                        </td>
+
+                                        <td class="question-content">
+                                            @question.QuestionText
+                                        </td>
+
+                                        <td class="question-content">
+                                            @if (!string.IsNullOrWhiteSpace(
+                                                question.SuggestedAnswer))
+                                            {
+                                                @question.SuggestedAnswer
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted fst-italic">
+                                                    No suggested answer.
+                                                </span>
+                                            }
+                                        </td>
+
+                                        <td>
+                                            <span class="badge bg-info text-dark">
+                                                @question.DifficultyLevel
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            @if (question.IsActive)
+                                            {
+                                                <span class="badge bg-success">
+                                                    Active
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">
+                                                    Inactive
+                                                </span>
+                                            }
+                                        </td>
+
+                                        <td>
+                                            <a asp-controller="AdminQuestions"
+                                               asp-action="Edit"
+                                               asp-route-id="@question.Id"
+                                               class="btn btn-sm btn-outline-primary">
+                                                Edit
+                                            </a>
+<a asp-controller="AdminAssessments"
+   asp-action="Edit"
+   asp-route-id="@question.Id"
+   class="btn btn-sm btn-outline-secondary mt-2">
+    Manage Assessment
+</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- MOBILE QUESTION CARDS -->
+                <div class="d-lg-none">
+                    <div class="row g-3">
+
+                        @foreach (var question in questions)
+                        {
+                            <div class="col-12 searchable-question"
+                                 data-question-id="@question.Id"
+                                 data-question-text="@question.QuestionText"
+                                 data-question-difficulty="@question.DifficultyLevel">
+
+                                <div class="card shadow-sm h-100 @(newQuestionId == question.Id ? "new-question-card" : "")">
+                                    <div class="card-body p-3">
+
+                                        <div class="d-flex justify-content-between
+                                            align-items-start gap-2 mb-3">
+
+                                            <span class="badge bg-primary">
+                                                Question #@question.Id
+                                            </span>
+                                            @if (newQuestionId == question.Id)
+                                            {
+                                                <span class="badge bg-success">Newly Added</span>
+                                            }
+
+                                            @if (question.IsActive)
+                                            {
+                                                <span class="badge bg-success">
+                                                    Active
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">
+                                                    Inactive
+                                                </span>
+                                            }
+                                        </div>
+
+                                        <h5 class="fw-bold mb-3">
+                                            @question.QuestionText
+                                        </h5>
+
+                                        <div class="mb-3">
+                                            <span class="small fw-semibold">
+                                                Difficulty:
+                                            </span>
+
+                                            <span class="badge bg-info text-dark">
+                                                @question.DifficultyLevel
+                                            </span>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <button class="btn btn-sm btn-outline-secondary"
+                                                    type="button"
+                                                    data-bs-toggle="collapse"
+                                                    data-bs-target="#answer-@question.Id"
+                                                    aria-expanded="false"
+                                                    aria-controls="answer-@question.Id">
+                                                Show / Hide Answer
+                                            </button>
+
+                                            <div class="collapse mt-2"
+                                                 id="answer-@question.Id">
+
+                                                <div class="answer-panel">
+                                                    @if (!string.IsNullOrWhiteSpace(
+                                                        question.SuggestedAnswer))
+                                                    {
+                                                        @question.SuggestedAnswer
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted fst-italic">
+                                                            No suggested answer.
+                                                        </span>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-grid">
+                                            <a asp-controller="AdminQuestions"
+                                               asp-action="Edit"
+                                               asp-route-id="@question.Id"
+                                               class="btn btn-primary">
+                                                Edit Question
+                                            </a>
+<a asp-controller="AdminAssessments"
+   asp-action="Edit"
+   asp-route-id="@question.Id"
+   class="btn btn-sm btn-outline-secondary mt-2">
+    Manage Assessment
+</a>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+        </div>
+    </div>
+
+    <!-- FOOTER NAVIGATION -->
+    <div class="d-flex flex-wrap gap-2 mt-4">
+
+        <a asp-controller="AdminCategories"
+           asp-action="Index"
+           class="btn btn-outline-secondary">
+            Back to Categories
+        </a>
+
+        <a asp-controller="AdminQuestions"
+           asp-action="Index"
+           class="btn btn-outline-primary">
+            Full Question Bank
+        </a>
+
+    </div>
+
+</div>
+
+<style>
+    .table-striped tbody tr.new-question-highlight > td {
+        background-color: #e8f7ee;
+        border-top: 2px solid #198754;
+        border-bottom: 2px solid #198754;
+    }
+
+    .new-question-card {
+        border: 2px solid #198754;
+        background-color: #e8f7ee;
+    }
+
+    .category-question-stat {
+        background: var(--bs-tertiary-bg, #f8f9fa);
+        border: 1px solid var(--bs-border-color, #dee2e6);
+        border-radius: 10px;
+        padding: 18px 10px;
+        text-align: center;
+        height: 100%;
+    }
+
+    .stat-number {
+        font-size: 1.7rem;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+
+    .stat-caption {
+        font-size: 0.85rem;
+        color: var(--bs-secondary-color, #6c757d);
+        overflow-wrap: anywhere;
+    }
+
+    .question-content {
+        min-width: 190px;
+        max-width: 360px;
+        overflow-wrap: anywhere;
+        white-space: normal;
+    }
+
+    .answer-panel {
+        background: var(--bs-tertiary-bg, #f8f9fa);
+        border: 1px solid var(--bs-border-color, #dee2e6);
+        border-radius: 8px;
+        padding: 12px;
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+    }
+
+    .card-body h5 {
+        overflow-wrap: anywhere;
+        line-height: 1.5;
+    }
+
+    @@media (max-width: 575.98px) {
+        .stat-number {
+            font-size: 1.4rem;
+        }
+
+        .stat-caption {
+            font-size: 0.75rem;
+        }
+    }
+
+    
+    /* Total Questions */
+
+    .total-questions-panel {
+        background: var(--bs-tertiary-bg, #f8f9fa);
+        border: 1px solid var(--bs-border-color, #dee2e6);
+        border-radius: 12px;
+        padding: 24px;
+        text-align: center;
+    }
+
+    .total-questions-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    /* Difficulty Breakdown */
+
+    .difficulty-stat {
+        background: var(--bs-body-bg, #fff);
+        border: 1px solid var(--bs-border-color, #dee2e6);
+        border-radius: 10px;
+        padding: 20px 12px;
+        text-align: center;
+        height: 100%;
+    }
+
+    .difficulty-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .difficulty-number {
+        font-size: 1.8rem;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+
+    .difficulty-caption {
+        font-size: 0.8rem;
+        color: var(--bs-secondary-color, #6c757d);
+        margin-top: 4px;
+    }
+
+    @@media (max-width: 575.98px) {
+        .total-questions-number {
+            font-size: 2rem;
+        }
+
+        .difficulty-stat {
+            padding: 14px 10px;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInput = document.getElementById("questionSearch");
+        const difficultyFilter = document.getElementById("difficultyFilter");
+        const searchCount = document.getElementById("questionSearchCount");
+        const emptyMessage = document.getElementById("questionSearchEmpty");
+        if (!searchInput || !difficultyFilter || !searchCount || !emptyMessage) return;
+
+        const desktopRows = Array.from(
+            document.querySelectorAll("tr.searchable-question"));
+        const mobileCards = Array.from(
+            document.querySelectorAll("div.searchable-question"));
+        const totalQuestions = desktopRows.length;
+
+        function matchesQuestion(element, term) {
+            if (!term) return true;
+            const id = element.dataset.questionId || "";
+            const questionText = (element.dataset.questionText || "").toLowerCase();
+            // A numeric search (with or without #) matches an exact question ID.
+            const idTerm = term.startsWith("#") ? term.slice(1).trim() : term;
+            if (/^\d+$/.test(idTerm)) return id === String(Number(idTerm));
+
+            // Other searches match question text only.
+            return questionText.includes(term);
+        }
+
+        function filterQuestions() {
+            const term = searchInput.value.trim().toLowerCase();
+            const selectedDifficulty = difficultyFilter.value.toLowerCase();
+            let visibleQuestions = 0;
+
+            function matchesFilters(element) {
+                const matchesText = matchesQuestion(element, term);
+                const questionDifficulty = (element.dataset.questionDifficulty || "").toLowerCase();
+                const matchesDifficulty = !selectedDifficulty || questionDifficulty === selectedDifficulty;
+                return matchesText && matchesDifficulty;
+            }
+
+            desktopRows.forEach(function (row) {
+                const matches = matchesFilters(row);
+                row.classList.toggle("d-none", !matches);
+                if (matches) visibleQuestions++;
+            });
+
+            mobileCards.forEach(function (card) {
+                card.classList.toggle("d-none", !matchesFilters(card));
+            });
+
+            searchCount.textContent =
+                `Showing ${visibleQuestions} of ${totalQuestions} questions`;
+            emptyMessage.classList.toggle("d-none", visibleQuestions !== 0);
+        }
+
+        searchInput.addEventListener("input", filterQuestions);
+        difficultyFilter.addEventListener("change", filterQuestions);
+    });
+</script>

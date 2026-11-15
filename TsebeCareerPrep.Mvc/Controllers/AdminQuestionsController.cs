@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
@@ -373,6 +373,8 @@ namespace TsebeCareerPrep.Mvc.Controllers
                     if (newQuestionId.HasValue)
                     {
                         TempData["NewQuestionId"] = newQuestionId.Value;
+                        TempData["HighlightQuestionId"] = newQuestionId.Value;
+                        TempData["HighlightType"] = "created";
                     }
 
                     return RedirectToAction(
@@ -582,6 +584,8 @@ namespace TsebeCareerPrep.Mvc.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
+                    TempData["HighlightQuestionId"] = model.Id;
+                    TempData["HighlightType"] = "updated";
                     TempData["SuccessMessage"] =
                         $"Interview question #{model.Id} updated successfully.";
 

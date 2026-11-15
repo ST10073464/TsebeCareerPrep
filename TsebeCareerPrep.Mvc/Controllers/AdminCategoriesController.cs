@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Net.Http.Json;
@@ -277,6 +277,8 @@ namespace TsebeCareerPrep.Mvc.Controllers
                 {
                     TempData["SuccessMessage"] =
                         "Interview category updated successfully.";
+                    TempData["HighlightCategoryId"] = id;
+                    TempData["HighlightType"] = "updated";
                     return RedirectToAction(nameof(Index));
                 }
 

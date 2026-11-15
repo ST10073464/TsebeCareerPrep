@@ -2,6 +2,12 @@
 
 @{
     ViewData["Title"] = "Manage Users";
+
+    string? highlightedUserId =
+        TempData["HighlightUserId"]?.ToString();
+
+    string highlightType =
+        TempData["HighlightType"]?.ToString() ?? "status";
 }
 
 <div class="container py-5">
@@ -85,7 +91,10 @@
                         <tbody>
                             @foreach (var user in Model)
                             {
-                                <tr>
+                                <tr data-highlight-target="user-@user.Id"
+                                    data-highlight-on-load="@(highlightedUserId == user.Id ? "true" : "false")"
+                                    data-highlight-type="@highlightType">
+
                                     <td class="text-break">
                                         @user.Email
                                     </td>
@@ -163,7 +172,10 @@
 
                     @foreach (var user in Model)
                     {
-                        <div class="card shadow-sm mb-3">
+                        <div class="card shadow-sm mb-3"
+                             data-highlight-target="user-@user.Id"
+                             data-highlight-on-load="@(highlightedUserId == user.Id ? "true" : "false")"
+                             data-highlight-type="@highlightType">
                             <div class="card-body p-3">
 
                                 <!-- USER HEADER -->

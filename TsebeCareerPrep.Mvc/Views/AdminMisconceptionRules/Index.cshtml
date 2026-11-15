@@ -1,0 +1,233 @@
+﻿@model TsebeCareerPrep.Mvc.Models.AdminMisconceptionRulesViewModel
+
+@{
+    ViewData["Title"] = "Manage Misconception Rules";
+
+    int? highlightedRuleId = null;
+
+    if (int.TryParse(
+        TempData["HighlightRuleId"]?.ToString(),
+        out var parsedRuleId))
+    {
+        highlightedRuleId = parsedRuleId;
+    }
+
+    string highlightType =
+        TempData["HighlightType"]?.ToString() ?? "updated";
+}
+
+<div class="container py-5">
+
+    <a asp-controller="AdminAssessments"
+       asp-action="Edit"
+       asp-route-id="@Model.QuestionId"
+       class="text-decoration-none">
+        &larr; Back to Assessment Rubric
+    </a>
+
+    <h1 class="fw-bold mt-4">Manage Misconception Rules</h1>
+
+    <p class="text-muted">Question #@Model.QuestionId</p>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h5 fw-bold">Interview Question</h2>
+            <p class="mb-0">@Model.QuestionText</p>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success" role="status">
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @TempData["Error"]
+        </div>
+    }
+
+    <div class="alert alert-info">
+        These rules identify phrases that may indicate
+        misunderstandings. A detected phrase does not prove
+        that an answer is incorrect.
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-3 p-md-4">
+
+            <h2 class="h4 fw-bold mb-4">Add Misconception Rule</h2>
+
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden"
+                       name="InterviewQuestionId"
+                       value="@Model.QuestionId" />
+
+                <div class="mb-3">
+                    <label for="newTrigger" class="form-label fw-semibold">
+                        Trigger Phrase
+                    </label>
+                    <input id="newTrigger"
+                           name="TriggerPhrase"
+                           class="form-control"
+                           maxlength="500"
+                           required
+                           placeholder="Encapsulation means inheritance" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="newFeedback" class="form-label fw-semibold">
+                        Learning Feedback
+                    </label>
+                    <textarea id="newFeedback"
+                              name="FeedbackMessage"
+                              class="form-control"
+                              rows="3"
+                              maxlength="2000"
+                              required
+                              placeholder="Review the difference between encapsulation and inheritance."></textarea>
+                </div>
+
+                <div class="form-check mb-4">
+                    <input type="checkbox"
+                           name="IsActive"
+                           value="true"
+                           id="newIsActive"
+                           class="form-check-input"
+                           checked />
+                    <label for="newIsActive" class="form-check-label">
+                        Activate this rule
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    Add Rule
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <h2 class="h4 fw-bold mb-3">
+        Existing Rules (@Model.Rules.Count)
+    </h2>
+
+    @if (!Model.Rules.Any())
+    {
+        <div class="alert alert-secondary">
+            No misconception rules have been configured
+            for this question yet.
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var rule in Model.Rules)
+            {
+                <div class="col-12">
+                    <div class="card shadow-sm"
+                         data-highlight-target="rule-@rule.Id"
+                         data-highlight-on-load="@(highlightedRuleId == rule.Id ? "true" : "false")"
+                         data-highlight-type="@highlightType">
+                        <div class="card-body p-3 p-md-4">
+
+                            <div class="d-flex justify-content-between
+                                align-items-center mb-3">
+                                <h3 class="h5 mb-0">Rule #@rule.Id</h3>
+
+                                @if (rule.IsActive)
+                                {
+                                    <span class="badge bg-success">
+                                        Active
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">
+                                        Inactive
+                                    </span>
+                                }
+                            </div>
+
+                            <form asp-action="Update"
+                                  asp-route-id="@rule.Id"
+                                  method="post">
+                                @Html.AntiForgeryToken()
+
+                                <input type="hidden"
+                                       name="InterviewQuestionId"
+                                       value="@Model.QuestionId" />
+
+                                <div class="mb-3">
+                                    <label for="trigger-@rule.Id"
+                                           class="form-label fw-semibold">
+                                        Trigger Phrase
+                                    </label>
+                                    <input id="trigger-@rule.Id"
+                                           name="TriggerPhrase"
+                                           value="@rule.TriggerPhrase"
+                                           maxlength="500"
+                                           required
+                                           class="form-control" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="feedback-@rule.Id"
+                                           class="form-label fw-semibold">
+                                        Learning Feedback
+                                    </label>
+                                    <textarea id="feedback-@rule.Id"
+                                              name="FeedbackMessage"
+                                              rows="3"
+                                              maxlength="2000"
+                                              required
+                                              class="form-control">@rule.FeedbackMessage</textarea>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input type="checkbox"
+                                           id="active-@rule.Id"
+                                           name="IsActive"
+                                           value="true"
+                                           checked="@rule.IsActive"
+                                           class="form-check-input" />
+                                    <label for="active-@rule.Id"
+                                           class="form-check-label">
+                                        Active
+                                    </label>
+                                </div>
+
+                                <button type="submit"
+                                        class="btn btn-outline-primary">
+                                    Save Changes
+                                </button>
+                            </form>
+
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="d-flex flex-wrap gap-2 mt-4">
+        <a asp-controller="AdminAssessments"
+           asp-action="Edit"
+           asp-route-id="@Model.QuestionId"
+           class="btn btn-outline-primary">
+            Manage Rubric
+        </a>
+
+        <a asp-controller="AdminQuestions"
+           asp-action="ByCategory"
+           asp-route-id="@Model.CategoryId"
+           class="btn btn-outline-secondary">
+            Back to Questions
+        </a>
+    </div>
+
+</div>

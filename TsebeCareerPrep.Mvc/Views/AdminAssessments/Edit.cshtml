@@ -1,0 +1,326 @@
+﻿@model TsebeCareerPrep.Mvc.Models.AdminAssessmentRubricViewModel
+
+@{
+    ViewData["Title"] = "Manage Assessment Rubric";
+}
+
+<div class="container py-5">
+
+    <a asp-controller="AdminQuestions"
+       asp-action="ByCategory"
+       asp-route-id="@Model.CategoryId"
+       class="text-decoration-none">
+        &larr; Back to Category Questions
+    </a>
+
+    <h1 class="fw-bold mt-4">Manage Assessment Rubric</h1>
+
+    <p class="text-muted">
+        Question #@Model.InterviewQuestionId
+    </p>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h5 fw-bold">Interview Question</h2>
+            <p class="mb-0">@Model.QuestionText</p>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div id="assessment-save-success"
+             class="alert alert-success"
+             role="status">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <div class="alert alert-info">
+        This rubric supports learning feedback.
+        Formal scoring and AI assessment are not enabled.
+    </div>
+
+    <form id="assessment-rubric-form"
+          asp-action="Edit"
+          asp-route-id="@Model.InterviewQuestionId"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <input asp-for="InterviewQuestionId" type="hidden" />
+        <input asp-for="CategoryId" type="hidden" />
+        <input asp-for="QuestionText" type="hidden" />
+
+        <div asp-validation-summary="All"
+             class="text-danger mb-3"></div>
+
+        <div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+
+                    <h2 class="h5 fw-bold mb-4">
+                        Learning Feedback Configuration
+                    </h2>
+
+                    <div class="mb-4">
+                        <label asp-for="ExpectedConcepts"
+                               class="form-label fw-semibold">
+                            Expected Concepts
+                        </label>
+
+                        <textarea asp-for="ExpectedConcepts"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Classes; Objects; Encapsulation; Reusability"></textarea>
+
+                        <span asp-validation-for="ExpectedConcepts"
+                              class="text-danger"></span>
+
+                        <div class="form-text">
+                            Separate expected concepts using semicolons.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="AcceptableAlternatives"
+                               class="form-label fw-semibold">
+                            Acceptable Alternatives
+                        </label>
+
+                        <textarea asp-for="AcceptableAlternatives"
+                                  class="form-control"
+                                  rows="4"
+                                  placeholder="Objects = object | instances"></textarea>
+
+                        <div class="form-text">
+                            Use one mapping per line:
+                            Expected Concept = alternative | alternative
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="CandidateGuidance"
+                               class="form-label fw-semibold">
+                            Candidate Improvement Guidance
+                        </label>
+
+                        <textarea asp-for="CandidateGuidance"
+                                  class="form-control"
+                                  rows="4"></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="AssessmentGuidance"
+                               class="form-label fw-semibold">
+                            Administrator Assessment Guidance
+                        </label>
+
+                        <textarea asp-for="AssessmentGuidance"
+                                  class="form-control"
+                                  rows="4"></textarea>
+
+                        <div class="form-text">
+                            Internal guidance for future manual assessment.
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+
+                    <h2 class="h5 fw-bold">Assessment Criteria</h2>
+
+                    <p class="text-muted">
+                        The criteria must total 10.
+                        These values do not award candidate marks.
+                    </p>
+
+                    <div class="row g-3">
+                        <div class="col-6 col-md-3">
+                            <label asp-for="TechnicalAccuracyMarks"
+                                   class="form-label">Technical Accuracy</label>
+                            <input asp-for="TechnicalAccuracyMarks"
+                                   type="number" min="0" max="10"
+                                   class="form-control" />
+                        </div>
+
+                        <div class="col-6 col-md-3">
+                            <label asp-for="KeyConceptMarks"
+                                   class="form-label">Key Concepts</label>
+                            <input asp-for="KeyConceptMarks"
+                                   type="number" min="0" max="10"
+                                   class="form-control" />
+                        </div>
+
+                        <div class="col-6 col-md-3">
+                            <label asp-for="ClarityMarks"
+                                   class="form-label">Clarity</label>
+                            <input asp-for="ClarityMarks"
+                                   type="number" min="0" max="10"
+                                   class="form-control" />
+                        </div>
+
+                        <div class="col-6 col-md-3">
+                            <label asp-for="PracticalExampleMarks"
+                                   class="form-label">Practical Example</label>
+                            <input asp-for="PracticalExampleMarks"
+                                   type="number" min="0" max="10"
+                                   class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="form-check mt-4">
+                        <input asp-for="IsActive"
+                               class="form-check-input" />
+                        <label asp-for="IsActive"
+                               class="form-check-label">
+                            Enable this rubric for learning feedback
+                        </label>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-primary">
+                Save Assessment Rubric
+            </button>
+
+            <a asp-controller="AdminQuestions"
+               asp-action="ByCategory"
+               asp-route-id="@Model.CategoryId"
+               class="btn btn-outline-secondary">
+                Cancel
+            </a>
+        </div>
+
+    </form>
+</div>
+
+
+<script>
+    (function () {
+        "use strict";
+
+        const form = document.getElementById("assessment-rubric-form");
+
+        if (!form) return;
+
+        const questionId = "@Model.InterviewQuestionId";
+        const storageKey = "tcp-rubric-changes-" + questionId;
+
+        const fieldNames = [
+            "ExpectedConcepts",
+            "AcceptableAlternatives",
+            "CandidateGuidance",
+            "AssessmentGuidance",
+            "TechnicalAccuracyMarks",
+            "KeyConceptMarks",
+            "ClarityMarks",
+            "PracticalExampleMarks",
+            "IsActive"
+        ];
+
+        function getField(name) {
+            return form.querySelector(
+                '[name="' + name + '"]'
+            );
+        }
+
+        function getValue(field) {
+            if (!field) return null;
+
+            if (field.type === "checkbox") {
+                return field.checked ? "true" : "false";
+            }
+
+            return field.value;
+        }
+
+        // Remember the values when the form first loads.
+        const originalValues = {};
+
+        fieldNames.forEach(function (name) {
+            originalValues[name] = getValue(getField(name));
+        });
+
+        // Store only changed field names when submitting.
+        form.addEventListener("submit", function (event) {
+            if (event.defaultPrevented || !form.checkValidity()) {
+                return;
+            }
+
+            const changedFields = fieldNames.filter(function (name) {
+                return originalValues[name] !== getValue(getField(name));
+            });
+
+            try {
+                sessionStorage.setItem(
+                    storageKey,
+                    JSON.stringify(changedFields)
+                );
+            } catch (error) {
+                // Saving the rubric must not depend on browser storage.
+            }
+        });
+
+        // Highlight only after the server confirms a successful save.
+        const saveSucceeded = Boolean(
+            document.getElementById("assessment-save-success")
+        );
+
+        if (!saveSucceeded) return;
+
+        let changedFields = [];
+
+        try {
+            changedFields = JSON.parse(
+                sessionStorage.getItem(storageKey) || "[]"
+            );
+            sessionStorage.removeItem(storageKey);
+        } catch (error) {
+            changedFields = [];
+        }
+
+        if (!Array.isArray(changedFields)) return;
+
+        const targets = changedFields
+            .filter(name => fieldNames.includes(name))
+            .map(getField)
+            .filter(Boolean);
+
+        if (targets.length === 0) return;
+
+        function showChanges() {
+            targets.forEach(function (field) {
+                field.classList.add("tcp-highlight-updated");
+
+                window.setTimeout(function () {
+                    field.classList.remove("tcp-highlight-updated");
+                }, 5000);
+            });
+
+            const first = targets[0];
+
+            const reducedMotion = window.matchMedia(
+                "(prefers-reduced-motion: reduce)"
+            ).matches;
+
+            first.scrollIntoView({
+                behavior: reducedMotion ? "auto" : "smooth",
+                block: "center"
+            });
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", showChanges);
+        } else {
+            showChanges();
+        }
+    })();
+</script>
+

@@ -1,4 +1,4 @@
-﻿@model List<TsebeCareerPrep.Mvc.Models.InterviewQuestionViewModel>
+@model List<TsebeCareerPrep.Mvc.Models.InterviewQuestionViewModel>
 
 @{
     ViewData["Title"] = "Category Questions";
@@ -19,6 +19,18 @@
 
     bool hasNewQuestion = newQuestionId.HasValue &&
         questions.Any(q => q.Id == newQuestionId.Value);
+
+    int? highlightedQuestionId = null;
+
+    if (int.TryParse(
+        TempData["HighlightQuestionId"]?.ToString(),
+        out var parsedHighlightId))
+    {
+        highlightedQuestionId = parsedHighlightId;
+    }
+
+    string highlightType =
+        TempData["HighlightType"]?.ToString() ?? "updated";
 
     int totalQuestions = questions.Count;
 
@@ -272,6 +284,9 @@
                                 @foreach (var question in questions)
                                 {
                                     <tr class="searchable-question @(newQuestionId == question.Id ? "new-question-highlight" : "")"
+                                        data-highlight-target="question-@question.Id"
+                                        data-highlight-on-load="@(highlightedQuestionId == question.Id ? "true" : "false")"
+                                        data-highlight-type="@highlightType"
                                         data-question-id="@question.Id"
                                         data-question-text="@question.QuestionText"
                                         data-question-difficulty="@question.DifficultyLevel">
@@ -329,6 +344,12 @@
                                                class="btn btn-sm btn-outline-primary">
                                                 Edit
                                             </a>
+                                            <a asp-controller="AdminAssessments"
+                                               asp-action="Edit"
+                                               asp-route-id="@question.Id"
+                                               class="btn btn-sm btn-outline-secondary mt-2">
+                                                Manage Assessment
+                                            </a>
                                         </td>
                                     </tr>
                                 }
@@ -348,7 +369,10 @@
                                  data-question-text="@question.QuestionText"
                                  data-question-difficulty="@question.DifficultyLevel">
 
-                                <div class="card shadow-sm h-100 @(newQuestionId == question.Id ? "new-question-card" : "")">
+                                <div class="card shadow-sm h-100 @(newQuestionId == question.Id ? "new-question-card" : "")"
+                                     data-highlight-target="mobile-question-@question.Id"
+                                     data-highlight-on-load="@(highlightedQuestionId == question.Id ? "true" : "false")"
+                                     data-highlight-type="@highlightType">
                                     <div class="card-body p-3">
 
                                         <div class="d-flex justify-content-between
@@ -425,6 +449,12 @@
                                                asp-route-id="@question.Id"
                                                class="btn btn-primary">
                                                 Edit Question
+                                            </a>
+                                            <a asp-controller="AdminAssessments"
+                                               asp-action="Edit"
+                                               asp-route-id="@question.Id"
+                                               class="btn btn-sm btn-outline-secondary mt-2">
+                                                Manage Assessment
                                             </a>
                                         </div>
 

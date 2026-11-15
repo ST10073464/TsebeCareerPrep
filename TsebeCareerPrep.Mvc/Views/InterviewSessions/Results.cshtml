@@ -154,7 +154,114 @@
             </div>
         </div>
 
-        <!-- =====================================
+        <!-- CANDIDATE FEEDBACK SUMMARY -->
+@{
+    var feedbackItems = (Model.Questions ??
+        new List<TsebeCareerPrep.Mvc.Models.InterviewResultQuestionViewModel>())
+        .Where(q => q.IsAnswered && q.AssessmentFeedback != null)
+        .Select(q => q.AssessmentFeedback!)
+        .ToList();
+
+    int assessedAnswers = feedbackItems.Count;
+
+    int detectedConcepts = feedbackItems.Sum(
+        f => f.DetectedConcepts?.Count ?? 0);
+
+    int conceptsToReview = feedbackItems.Sum(
+        f => f.ConceptsToReview?.Count ?? 0);
+
+    int misconceptionWarnings = feedbackItems.Sum(
+        f => f.PotentialMisconceptions?.Count ?? 0);
+}
+
+<section class="card shadow-sm mb-4"
+         aria-labelledby="candidate-feedback-summary">
+    <div class="card-body p-3 p-md-4">
+
+        <h2 id="candidate-feedback-summary"
+            class="h4 fw-bold mb-2">
+            Your Learning Feedback
+        </h2>
+
+        <p class="text-muted mb-4">
+            This overview highlights learning opportunities
+            from your interview responses. It is not a formal
+            assessment or technical accuracy score.
+        </p>
+
+        <div class="row g-3">
+
+            <div class="col-6 col-lg-3">
+                <div class="border rounded-3 p-3 h-100">
+                    <div class="text-muted small mb-2">
+                        Answers With Feedback
+                    </div>
+                    <div class="fs-3 fw-bold">
+                        @assessedAnswers
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="border rounded-3 p-3 h-100">
+                    <div class="text-muted small mb-2">
+                        Detected Concepts
+                    </div>
+                    <div class="fs-3 fw-bold">
+                        @detectedConcepts
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="border rounded-3 p-3 h-100">
+                    <div class="text-muted small mb-2">
+                        Concepts to Review
+                    </div>
+                    <div class="fs-3 fw-bold">
+                        @conceptsToReview
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="border rounded-3 p-3 h-100">
+                    <div class="text-muted small mb-2">
+                        Potential Misconceptions
+                    </div>
+                    <div class="fs-3 fw-bold">
+                        @misconceptionWarnings
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        @if (assessedAnswers == 0)
+        {
+            <div class="alert alert-info mt-4 mb-0">
+                Learning feedback is not yet available
+                for the answers in this interview.
+            </div>
+        }
+        else if (conceptsToReview > 0 || misconceptionWarnings > 0)
+        {
+            <div class="alert alert-info mt-4 mb-0">
+                Review the question-by-question feedback
+                below to identify areas for improvement.
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info mt-4 mb-0">
+                Review your answers and suggested answers
+                below to continue improving your skills.
+            </div>
+        }
+
+    </div>
+</section>
+<!-- =====================================
              QUESTION-BY-QUESTION REVIEW
              ===================================== -->
         <div class="interview-results-section-heading">

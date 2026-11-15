@@ -1,4 +1,4 @@
-﻿@model List<TsebeCareerPrep.Mvc.Models.InterviewCategoryAdminViewModel>
+@model List<TsebeCareerPrep.Mvc.Models.InterviewCategoryAdminViewModel>
 
 @{
     ViewData["Title"] = "Manage Interview Categories";
@@ -7,6 +7,18 @@
         ?? new List<TsebeCareerPrep.Mvc.Models.InterviewCategoryAdminViewModel>();
 
     var totalQuestions = categories.Sum(c => c.TotalQuestions);
+
+    int? highlightedCategoryId = null;
+
+    if (int.TryParse(
+        TempData["HighlightCategoryId"]?.ToString(),
+        out var parsedCategoryId))
+    {
+        highlightedCategoryId = parsedCategoryId;
+    }
+
+    string highlightType =
+        TempData["HighlightType"]?.ToString() ?? "updated";
 }
 
 <div class="container py-5">
@@ -94,7 +106,9 @@
                             <tbody>
                                 @foreach (var category in categories)
                                 {
-                                    <tr>
+                                    <tr data-highlight-target="category-@category.Id"
+                                        data-highlight-on-load="@(highlightedCategoryId == category.Id ? "true" : "false")"
+                                        data-highlight-type="@highlightType">
                                         <td>@category.Id</td>
 
                                         <td class="fw-semibold">
@@ -182,7 +196,10 @@
                         @foreach (var category in categories)
                         {
                             <div class="col-12">
-                                <div class="card shadow-sm h-100">
+                                <div class="card shadow-sm h-100"
+                                     data-highlight-target="mobile-category-@category.Id"
+                                     data-highlight-on-load="@(highlightedCategoryId == category.Id ? "true" : "false")"
+                                     data-highlight-type="@highlightType">
 
                                     <div class="card-body p-3">
 

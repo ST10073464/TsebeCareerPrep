@@ -105,6 +105,9 @@ namespace TsebeCareerPrep.Mvc.Controllers
                 {
                     TempData["SuccessMessage"] =
                         "User account unlocked successfully.";
+
+                    TempData["HighlightUserId"] = id;
+                    TempData["HighlightType"] = "status";
                 }
                 else if (response.StatusCode ==
                          HttpStatusCode.NotFound)
