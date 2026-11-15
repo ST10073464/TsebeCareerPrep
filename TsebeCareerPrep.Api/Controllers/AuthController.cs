@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TsebeCareerPrep.Api.Models;
@@ -9,7 +10,6 @@ namespace TsebeCareerPrep.Api.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
 
@@ -21,9 +21,9 @@ namespace TsebeCareerPrep.Api.Controllers
             _signInManager = signInManager;
         }
 
-
         // POST: api/Auth/register
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<IActionResult> Register(
             [FromBody] RegisterRequest request)
         {
@@ -71,15 +71,15 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
         }
 
-
         // POST: api/Auth/login
-
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<IActionResult> Login(
             [FromBody] LoginRequest request)
         {
-            var user = await _userManager.FindByEmailAsync(
-                request.Email);
+            // Find the user by email.
+            var user = await _userManager
+                .FindByEmailAsync(request.Email);
 
             if (user == null)
             {
@@ -89,12 +89,15 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
-            var result = await _signInManager.PasswordSignInAsync(
-                user,
-                request.Password,
-                isPersistent: false,
-                lockoutOnFailure: true);
+            // Authenticate using ASP.NET Core Identity.
+            var result = await _signInManager
+                .PasswordSignInAsync(
+                    user,
+                    request.Password,
+                    isPersistent: false,
+                    lockoutOnFailure: true);
 
+            // Check whether the account is locked.
             if (result.IsLockedOut)
             {
                 return Unauthorized(new
@@ -103,6 +106,7 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
+            // Check whether login is permitted.
             if (result.IsNotAllowed)
             {
                 return Unauthorized(new
@@ -111,6 +115,7 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
+            // Reject invalid credentials.
             if (!result.Succeeded)
             {
                 return Unauthorized(new
@@ -119,17 +124,27 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
+            // Retrieve the authenticated user's Identity roles.
+            var roles = await _userManager.GetRolesAsync(user);
+
+            // Determine the appropriate application destination.
+            var role = roles.Contains("Administrator")
+                ? "Administrator"
+                : "Candidate";
+
+            // Return the authenticated user's details and role.
             return Ok(new
             {
                 message = "Login successful.",
                 userId = user.Id,
-                email = user.Email
+                email = user.Email,
+                role = role
             });
         }
 
-
+        // POST: api/Auth/logout
         [HttpPost("logout")]
-        [Microsoft.AspNetCore.Authorization.Authorize]
+        [Authorize]
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
@@ -139,8 +154,5 @@ namespace TsebeCareerPrep.Api.Controllers
                 message = "Logout successful."
             });
         }
-
-
-
     }
 }

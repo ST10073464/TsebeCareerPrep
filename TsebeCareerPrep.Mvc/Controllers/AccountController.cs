@@ -5,9 +5,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TsebeCareerPrep.Mvc.Models;
 
-using AuthenticationService = TsebeCareerPrep.Mvc.Services.AuthenticationService;
-using ApiLoginResult = TsebeCareerPrep.Mvc.Services.ApiLoginResult;
+using AuthenticationService =
+    TsebeCareerPrep.Mvc.Services.AuthenticationService;
 
+using ApiLoginResult =
+    TsebeCareerPrep.Mvc.Services.ApiLoginResult;
 
 namespace TsebeCareerPrep.Mvc.Controllers
 {
@@ -81,12 +83,12 @@ namespace TsebeCareerPrep.Mvc.Controllers
                 return View(model);
             }
 
-            // Use the Identity authentication cookie
-            // issued by the API.
+            // Read the authentication cookie issued by the API.
             var cookieParts =
                 loginResult.AuthenticationCookie.Split('=', 2);
 
             if (cookieParts.Length != 2 ||
+                string.IsNullOrWhiteSpace(cookieParts[0]) ||
                 string.IsNullOrWhiteSpace(cookieParts[1]))
             {
                 ModelState.AddModelError(
@@ -97,6 +99,7 @@ namespace TsebeCareerPrep.Mvc.Controllers
                 return View(model);
             }
 
+            // Preserve the existing Identity cookie integration.
             Response.Cookies.Append(
                 cookieParts[0],
                 cookieParts[1],
@@ -109,12 +112,23 @@ namespace TsebeCareerPrep.Mvc.Controllers
                     IsEssential = true
                 });
 
+            // Respect valid local return URLs.
             if (!string.IsNullOrWhiteSpace(returnUrl) &&
                 Url.IsLocalUrl(returnUrl))
             {
                 return LocalRedirect(returnUrl);
             }
 
+            // Redirect administrators to their dashboard.
+            if (string.Equals(
+                loginResult.User.Role,
+                "Administrator",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                return RedirectToAction("Index", "Admin");
+            }
+
+            // Candidates continue to the normal homepage.
             return RedirectToAction("Index", "Home");
         }
 

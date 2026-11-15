@@ -11,18 +11,145 @@
 
     var completionWidth = Math.Clamp(
         Model.CompletionRate, 0, 100);
+
+    var completionPercentage = completionWidth.ToString(
+        "0.##",
+        System.Globalization.CultureInfo.InvariantCulture);
 }
 
-<div class="container py-5">
+<style>
+    /* Administrator Reports */
+    .admin-reports-page {
+        color: #09234a;
+    }
 
-    <!-- Page heading -->
+        .admin-reports-page .report-heading {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .admin-reports-page .report-card {
+            border: 1px solid #e1e5eb;
+            border-radius: 6px;
+            height: 100%;
+        }
+
+            .admin-reports-page .report-card .card-body {
+                padding: 1.5rem;
+            }
+
+        .admin-reports-page .report-label {
+            color: #66758b;
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .admin-reports-page .report-value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .admin-reports-page .report-section {
+            border: 1px solid #e1e5eb;
+            border-radius: 6px;
+        }
+
+        .admin-reports-page .report-section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .admin-reports-page .report-progress {
+            height: 18px;
+            border-radius: 6px;
+        }
+
+        .admin-reports-page .report-table {
+            width: 100%;
+        }
+
+            .admin-reports-page .report-table th,
+            .admin-reports-page .report-table td {
+                padding: 0.85rem;
+                vertical-align: middle;
+            }
+
+            .admin-reports-page .report-table .badge {
+                font-size: 0.8rem;
+            }
+
+    @@media (max-width: 767.98px) {
+        .admin-reports-page {
+            padding-top: 2rem !important;
+            padding-bottom: 5rem !important;
+        }
+
+            .admin-reports-page .report-heading {
+                font-size: 1.55rem;
+                line-height: 1.25;
+            }
+
+            .admin-reports-page .report-back-button {
+                width: fit-content;
+            }
+
+            .admin-reports-page .report-card .card-body {
+                padding: 1rem 1.1rem;
+            }
+
+            .admin-reports-page .report-label {
+                font-size: 0.85rem;
+                margin-bottom: 0.4rem;
+            }
+
+            .admin-reports-page .report-value {
+                font-size: 1.7rem;
+            }
+
+            .admin-reports-page .report-section .card-body {
+                padding: 1.1rem;
+            }
+
+            .admin-reports-page .report-section-title {
+                font-size: 1.1rem;
+            }
+
+            .admin-reports-page .completion-summary {
+                font-size: 0.85rem;
+            }
+
+            .admin-reports-page .report-table {
+                font-size: 0.85rem;
+            }
+
+                .admin-reports-page .report-table th,
+                .admin-reports-page .report-table td {
+                    padding: 0.7rem 0.5rem;
+                }
+
+                .admin-reports-page .report-table .badge {
+                    font-size: 0.7rem;
+                    white-space: normal;
+                    text-align: left;
+                }
+    }
+</style>
+
+<div class="container py-5 admin-reports-page">
+
+    <!-- PAGE HEADER -->
     <div class="d-flex justify-content-between
         align-items-start flex-wrap gap-3 mb-4">
 
         <div>
-            <h1 class="fw-bold">Administrator Reports</h1>
+            <h1 class="report-heading">
+                Administrator Reports
+            </h1>
 
-            <p class="text-muted">
+            <p class="text-muted mb-0">
                 Platform-wide interview activity and
                 performance statistics.
             </p>
@@ -30,87 +157,93 @@
 
         <a asp-controller="Admin"
            asp-action="Index"
-           class="btn btn-outline-secondary">
+           class="btn btn-outline-secondary report-back-button">
             Back to Dashboard
         </a>
 
     </div>
 
-    <!-- Overview cards -->
-    <div class="row g-4 mb-5">
+    <!-- OVERVIEW CARDS -->
+    <div class="row g-3 g-md-4 mb-4">
 
-        <div class="col-md-6 col-xl-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body p-4">
-                    <p class="text-muted mb-2">
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="card shadow-sm report-card">
+                <div class="card-body">
+                    <p class="report-label">
                         Registered Users
                     </p>
-                    <h2 class="fw-bold mb-0">
+
+                    <h2 class="report-value">
                         @Model.TotalUsers
                     </h2>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-6 col-xl-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body p-4">
-                    <p class="text-muted mb-2">
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="card shadow-sm report-card">
+                <div class="card-body">
+                    <p class="report-label">
                         Total Interview Sessions
                     </p>
-                    <h2 class="fw-bold mb-0">
+
+                    <h2 class="report-value">
                         @Model.TotalSessions
                     </h2>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-6 col-xl-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body p-4">
-                    <p class="text-muted mb-2">
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="card shadow-sm report-card">
+                <div class="card-body">
+                    <p class="report-label">
                         Completed Interviews
                     </p>
-                    <h2 class="fw-bold mb-0">
+
+                    <h2 class="report-value">
                         @Model.CompletedSessions
                     </h2>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-6 col-xl-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body p-4">
-                    <p class="text-muted mb-2">
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="card shadow-sm report-card">
+                <div class="card-body">
+                    <p class="report-label">
                         In-Progress Interviews
                     </p>
-                    <h2 class="fw-bold mb-0">
+
+                    <h2 class="report-value">
                         @Model.InProgressSessions
                     </h2>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-6 col-xl-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body p-4">
-                    <p class="text-muted mb-2">
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="card shadow-sm report-card">
+                <div class="card-body">
+                    <p class="report-label">
                         Active Interview Categories
                     </p>
-                    <h2 class="fw-bold mb-0">
+
+                    <h2 class="report-value">
                         @Model.ActiveCategories
                     </h2>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-6 col-xl-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body p-4">
-                    <p class="text-muted mb-2">
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="card shadow-sm report-card">
+                <div class="card-body">
+                    <p class="report-label">
                         Submitted Answers
                     </p>
-                    <h2 class="fw-bold mb-0">
+
+                    <h2 class="report-value">
                         @Model.TotalAnswers
                     </h2>
                 </div>
@@ -119,18 +252,19 @@
 
     </div>
 
-    <!-- Interview completion rate -->
-    <div class="card shadow-sm mb-4">
+    <!-- INTERVIEW COMPLETION RATE -->
+    <div class="card shadow-sm report-section mb-4">
 
         <div class="card-body p-4">
 
-            <h4 class="fw-bold mb-3">
+            <h4 class="report-section-title mb-3">
                 Interview Completion Rate
             </h4>
 
-            <div class="d-flex justify-content-between mb-2">
+            <div class="d-flex justify-content-between
+                align-items-center flex-wrap gap-2 mb-2">
 
-                <span class="text-muted">
+                <span class="text-muted completion-summary">
                     Completed interview sessions
                 </span>
 
@@ -140,21 +274,20 @@
 
             </div>
 
-            <div class="progress"
+            <div class="progress report-progress"
                  role="progressbar"
                  aria-label="Interview completion rate"
-                 aria-valuenow="@completionWidth"
+                 aria-valuenow="@completionPercentage"
                  aria-valuemin="0"
-                 aria-valuemax="100"
-                 style="height: 18px;">
+                 aria-valuemax="100">
 
                 <div class="progress-bar bg-success"
-                     style="width: @(completionWidth.ToString(System.Globalization.CultureInfo.InvariantCulture))%;">
+                     style="width: @(completionPercentage)%;">
                 </div>
 
             </div>
 
-            <p class="text-muted mt-3 mb-0">
+            <p class="text-muted mt-3 mb-0 completion-summary">
                 @Model.CompletedSessions of
                 @Model.TotalSessions interview sessions completed.
             </p>
@@ -163,23 +296,27 @@
 
     </div>
 
-    <!-- Session breakdown -->
-    <div class="card shadow-sm">
+    <!-- SESSION BREAKDOWN -->
+    <div class="card shadow-sm report-section">
 
         <div class="card-body p-4">
 
-            <h4 class="fw-bold mb-3">
+            <h4 class="report-section-title mb-3">
                 Interview Session Breakdown
             </h4>
 
             <div class="table-responsive">
 
-                <table class="table table-bordered align-middle mb-0">
+                <table class="table table-bordered
+                    align-middle mb-0 report-table">
 
                     <thead class="table-light">
                         <tr>
-                            <th>Session Status</th>
-                            <th class="text-end">
+                            <th scope="col">
+                                Session Status
+                            </th>
+
+                            <th scope="col" class="text-end">
                                 Number of Sessions
                             </th>
                         </tr>
@@ -193,6 +330,7 @@
                                     Completed
                                 </span>
                             </td>
+
                             <td class="text-end">
                                 @Model.CompletedSessions
                             </td>
@@ -204,6 +342,7 @@
                                     In Progress
                                 </span>
                             </td>
+
                             <td class="text-end">
                                 @Model.InProgressSessions
                             </td>
@@ -215,6 +354,7 @@
                                     Other Statuses
                                 </span>
                             </td>
+
                             <td class="text-end">
                                 @otherSessions
                             </td>
@@ -224,7 +364,10 @@
 
                     <tfoot class="table-light">
                         <tr>
-                            <th>Total Sessions</th>
+                            <th scope="row">
+                                Total Sessions
+                            </th>
+
                             <th class="text-end">
                                 @Model.TotalSessions
                             </th>

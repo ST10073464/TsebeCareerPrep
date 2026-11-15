@@ -31,6 +31,10 @@ namespace TsebeCareerPrep.Api.Data
         public DbSet<InterviewQuestionRubric> InterviewQuestionRubrics
             => Set<InterviewQuestionRubric>();
 
+        // Question-specific misconception detection rules.
+        public DbSet<InterviewMisconceptionRule> InterviewMisconceptionRules
+            => Set<InterviewMisconceptionRule>();
+
         // Stores the questions assigned to each interview session.
         // Question content is preserved independently of later edits.
         public DbSet<InterviewSessionQuestion> InterviewSessionQuestions
@@ -100,6 +104,35 @@ namespace TsebeCareerPrep.Api.Data
                 .HasForeignKey<InterviewQuestionRubric>(
                     r => r.InterviewQuestionId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // InterviewQuestion -> InterviewMisconceptionRule
+            // A question may have multiple misconception rules.
+            // Restrict deletion to protect configured rules.
+            modelBuilder.Entity<InterviewMisconceptionRule>()
+                .HasOne(r => r.InterviewQuestion)
+                .WithMany()
+                .HasForeignKey(r => r.InterviewQuestionId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Required phrase and feedback message.
+            modelBuilder.Entity<InterviewMisconceptionRule>()
+                .Property(r => r.TriggerPhrase)
+                .IsRequired()
+                .HasMaxLength(500);
+
+            modelBuilder.Entity<InterviewMisconceptionRule>()
+                .Property(r => r.FeedbackMessage)
+                .IsRequired()
+                .HasMaxLength(2000);
+
+            // Optimise lookup of active rules for a question.
+            modelBuilder.Entity<InterviewMisconceptionRule>()
+                .HasIndex(r => new
+                {
+                    r.InterviewQuestionId,
+                    r.IsActive
+                });
 
             // InterviewSession -> InterviewSessionQuestion
             // Deleting a session removes its assigned snapshots.

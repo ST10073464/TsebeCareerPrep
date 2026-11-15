@@ -6,12 +6,17 @@
 
 <div class="container py-5">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <!-- PAGE HEADER -->
+    <div class="d-flex justify-content-between
+        align-items-start align-items-md-center
+        flex-column flex-md-row gap-3 mb-4">
+
         <div>
             <h1 class="fw-bold">Manage Users</h1>
 
             <p class="text-muted mb-0">
-                View registered users, assigned roles and account status.
+                View registered users, assigned roles
+                and account status.
             </p>
         </div>
 
@@ -22,6 +27,7 @@
         </a>
     </div>
 
+    <!-- NOTIFICATIONS -->
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success" role="alert">
@@ -36,11 +42,16 @@
         </div>
     }
 
+    <!-- REGISTERED USERS -->
     <div class="card shadow-sm">
-        <div class="card-body p-4">
+        <div class="card-body p-3 p-md-4">
 
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="fw-bold mb-0">Registered Users</h4>
+            <div class="d-flex justify-content-between
+                align-items-center gap-2 mb-3">
+
+                <h4 class="fw-bold mb-0">
+                    Registered Users
+                </h4>
 
                 <span class="badge bg-primary">
                     @(Model?.Count ?? 0) Users
@@ -55,8 +66,11 @@
             }
             else
             {
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped align-middle">
+                <!-- DESKTOP AND TABLET TABLE -->
+                <div class="table-responsive d-none d-md-block">
+
+                    <table class="table table-bordered
+                        table-striped align-middle">
 
                         <thead class="table-dark">
                             <tr>
@@ -72,11 +86,17 @@
                             @foreach (var user in Model)
                             {
                                 <tr>
-                                    <td>@user.Email</td>
-                                    <td>@user.UserName</td>
+                                    <td class="text-break">
+                                        @user.Email
+                                    </td>
+
+                                    <td class="text-break">
+                                        @user.UserName
+                                    </td>
 
                                     <td>
-                                        @if (user.Roles != null && user.Roles.Any())
+                                        @if (user.Roles != null &&
+                                             user.Roles.Any())
                                         {
                                             @foreach (var role in user.Roles)
                                             {
@@ -136,6 +156,112 @@
                             }
                         </tbody>
                     </table>
+                </div>
+
+                <!-- MOBILE USER CARDS -->
+                <div class="d-md-none">
+
+                    @foreach (var user in Model)
+                    {
+                        <div class="card shadow-sm mb-3">
+                            <div class="card-body p-3">
+
+                                <!-- USER HEADER -->
+                                <div class="d-flex justify-content-between
+                                    align-items-start gap-2 mb-3">
+
+                                    <span class="badge bg-primary">
+                                        User Account
+                                    </span>
+
+                                    @if (user.IsLockedOut)
+                                    {
+                                        <span class="badge bg-danger">
+                                            Locked
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">
+                                            Not Locked
+                                        </span>
+                                    }
+                                </div>
+
+                                <!-- EMAIL -->
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">
+                                        Email Address
+                                    </div>
+
+                                    <div class="fw-semibold text-break">
+                                        @user.Email
+                                    </div>
+                                </div>
+
+                                <!-- USERNAME -->
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">
+                                        Username
+                                    </div>
+
+                                    <div class="text-break">
+                                        @user.UserName
+                                    </div>
+                                </div>
+
+                                <!-- ASSIGNED ROLES -->
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">
+                                        Assigned Role
+                                    </div>
+
+                                    @if (user.Roles != null &&
+                                         user.Roles.Any())
+                                    {
+                                        @foreach (var role in user.Roles)
+                                        {
+                                            <span class="badge bg-primary me-1">
+                                                @role
+                                            </span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">
+                                            Standard User
+                                        </span>
+                                    }
+                                </div>
+
+                                <!-- ACCOUNT ACTIONS -->
+                                @if (user.IsLockedOut)
+                                {
+                                    <form asp-controller="AdminUsers"
+                                          asp-action="Unlock"
+                                          asp-route-id="@user.Id"
+                                          method="post">
+
+                                        @Html.AntiForgeryToken()
+
+                                        <button type="submit"
+                                                class="btn btn-primary w-100"
+                                                onclick="return confirm('Are you sure you want to unlock this user account?');">
+                                            Unlock Account
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <div class="small text-muted">
+                                        No account action required.
+                                    </div>
+                                }
+
+                            </div>
+                        </div>
+                    }
+
                 </div>
             }
 

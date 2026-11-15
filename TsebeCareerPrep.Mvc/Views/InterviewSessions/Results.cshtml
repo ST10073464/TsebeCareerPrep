@@ -280,6 +280,32 @@
                                     <strong>Status:</strong> @feedback.AssessmentStatus
                                 </p>
 
+                                @if (feedback.ConceptCoveragePercentage.HasValue)
+                                {
+                                    var coverage = Math.Clamp(
+                                        feedback.ConceptCoveragePercentage.Value, 0, 100);
+
+                                    <div class="mb-4" aria-label="Indicative concept coverage">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h5 class="fs-6 mb-0">Concept Coverage</h5>
+                                            <strong>@coverage%</strong>
+                                        </div>
+                                        <div class="progress" style="height: 12px;"
+                                             role="progressbar"
+                                             aria-label="Concept coverage"
+                                             aria-valuenow="@coverage"
+                                             aria-valuemin="0"
+                                             aria-valuemax="100">
+                                            <div class="progress-bar bg-success"
+                                                 style="width: @(coverage)%"></div>
+                                        </div>
+                                        <p class="text-muted small mt-2 mb-0">
+                                            Indicative phrase coverage only. This does not
+                                            verify technical correctness or represent a formal score.
+                                        </p>
+                                    </div>
+                                }
+
                                 <h5 class="fs-6">Detected Concepts</h5>
                                 @if (feedback.DetectedConcepts.Any())
                                 {
@@ -310,11 +336,47 @@
                                     <p class="text-muted">All listed expected phrases were detected.</p>
                                 }
 
+                                @if (feedback.PotentialMisconceptions?.Any() == true)
+                                {
+                                    <div class="alert alert-warning mt-3 mb-4" role="alert">
+                                        <h5 class="fs-6 mb-2">Potential Misconceptions</h5>
+                                        <p class="small mb-2">
+                                            The following phrases may indicate misunderstandings.
+                                            Review these explanations carefully; these warnings
+                                            do not establish whether your answer is correct or incorrect.
+                                        </p>
+                                        <ul class="mb-0">
+                                            @foreach (var warning in feedback.PotentialMisconceptions)
+                                            {
+                                                <li>@warning</li>
+                                            }
+                                        </ul>
+                                    </div>
+                                }
+
                                 @if (!string.IsNullOrWhiteSpace(feedback.ImprovementGuidance))
                                 {
-                                    <h5 class="fs-6">Improvement Guidance</h5>
-                                    <p>@feedback.ImprovementGuidance</p>
+                                    <section class="border border-primary-subtle rounded-3 p-3 p-md-4 my-4"
+                                             aria-labelledby="improvement-guidance-@question.QuestionNumber">
+
+                                        <h5 class="fs-5 fw-bold text-primary mb-3"
+                                            id="improvement-guidance-@question.QuestionNumber">
+                                            <span aria-hidden="true">💡</span>
+                                            How to Improve Your Answer
+                                        </h5>
+
+                                        <p class="fw-medium lh-lg mb-3">
+                                            @feedback.ImprovementGuidance
+                                        </p>
+
+                                        <p class="text-muted small mb-0">
+                                            <span aria-hidden="true">🎯</span>
+                                            Focus on applying these suggestions
+                                            in your next practice interview.
+                                        </p>
+                                    </section>
                                 }
+
 
                                 @if (feedback.RequiresManualReview)
                                 {

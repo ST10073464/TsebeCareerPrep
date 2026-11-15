@@ -112,9 +112,9 @@ builder.Services.AddScoped<
     InterviewAssessmentService>();
 
 // Use Google Gemini for provisional AI assessments.
-builder.Services.AddScoped<
-    IAiInterviewAssessmentService,
-    GeminiInterviewAssessmentService>();
+//builder.Services.AddScoped<
+//    IAiInterviewAssessmentService,
+//   GeminiInterviewAssessmentService>();
 
 
 builder.Services.AddHttpClient("OpenAI", client =>

@@ -1687,13 +1687,23 @@ body {
     color: #137548;
 }
 
+
 .interview-result-answer-text {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 0;
     padding: 20px;
     border-radius: 12px;
     font-size: 14px;
     line-height: 1.8;
-    white-space: pre-wrap;
+    /* Collapse Razor indentation/newlines so text begins at the top. */
+    white-space: normal;
+    text-align: left;
     overflow-wrap: anywhere;
+    word-break: normal;
+    vertical-align: top;
+    align-content: start;
 }
 
     .interview-result-answer-text.user-answer {

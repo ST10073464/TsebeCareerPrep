@@ -304,6 +304,43 @@ namespace TsebeCareerPrep.Api.Migrations
                     b.ToTable("InterviewCategories");
                 });
 
+            modelBuilder.Entity("TsebeCareerPrep.Api.Models.InterviewMisconceptionRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FeedbackMessage")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("InterviewQuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("TriggerPhrase")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InterviewQuestionId", "IsActive");
+
+                    b.ToTable("InterviewMisconceptionRules");
+                });
+
             modelBuilder.Entity("TsebeCareerPrep.Api.Models.InterviewQuestion", b =>
                 {
                     b.Property<int>("Id")
@@ -353,6 +390,11 @@ namespace TsebeCareerPrep.Api.Migrations
                         .HasColumnType("nvarchar(2000)");
 
                     b.Property<string>("AssessmentGuidance")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("CandidateGuidance")
                         .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
@@ -579,6 +621,17 @@ namespace TsebeCareerPrep.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("InterviewResponse");
+                });
+
+            modelBuilder.Entity("TsebeCareerPrep.Api.Models.InterviewMisconceptionRule", b =>
+                {
+                    b.HasOne("TsebeCareerPrep.Api.Models.InterviewQuestion", "InterviewQuestion")
+                        .WithMany()
+                        .HasForeignKey("InterviewQuestionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("InterviewQuestion");
                 });
 
             modelBuilder.Entity("TsebeCareerPrep.Api.Models.InterviewQuestion", b =>

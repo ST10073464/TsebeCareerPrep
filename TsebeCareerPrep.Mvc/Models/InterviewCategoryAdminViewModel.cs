@@ -19,5 +19,17 @@ namespace TsebeCareerPrep.Mvc.Models
 
         [Display(Name = "Active")]
         public bool IsActive { get; set; } = true;
+
+        // ==========================================
+        // Category Question Statistics
+        // ==========================================
+
+        public int TotalQuestions { get; set; }
+
+        public int BeginnerQuestions { get; set; }
+
+        public int IntermediateQuestions { get; set; }
+
+        public int AdvancedQuestions { get; set; }
     }
 }

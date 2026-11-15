@@ -39,6 +39,10 @@
         var isAuthenticated =
             User.Identity?.IsAuthenticated == true;
 
+        var isAdministrator = isAuthenticated && User.IsInRole("Administrator");
+
+        var isAdminPage = currentController == "Admin";
+
         var isHomeActive =
             currentController == "Home" &&
             currentAction == "Index";
@@ -68,7 +72,7 @@
             <div class="container">
 
                 <a class="navbar-brand fw-bold text-primary"
-                   asp-controller="Home"
+                   asp-controller="@(isAdministrator ? "Admin" : "Home")"
                    asp-action="Index">
                     Tsebe CareerPrep
                 </a>
@@ -109,50 +113,25 @@
                      id="mainNavbar">
 
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-
-                        <li class="nav-item">
-                            <a class="nav-link"
-                               asp-controller="Home"
-                               asp-action="Index">
-                                Home
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link"
-                               asp-controller="InterviewCategories"
-                               asp-action="Index">
-                                Interview Practice
-                            </a>
-                        </li>
-
-                        @if (isAuthenticated)
+                        @if (isAdministrator)
                         {
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   asp-controller="InterviewSessions"
-                                   asp-action="History">
-                                    My Interviews
-                                </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   asp-controller="InterviewSessions"
-                                   asp-action="Progress">
-                                    My Progress
-                                </a>
-                            </li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Index">Dashboard</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="AdminQuestions" asp-action="Index">Questions</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="AdminCategories" asp-action="Index">Categories</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="AdminReports" asp-action="Index">Reports</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="AdminUsers" asp-action="Index">Users</a></li>
                         }
-
-                        <li class="nav-item">
-                            <a class="nav-link"
-                               asp-controller="Home"
-                               asp-action="Privacy">
-                                Privacy
-                            </a>
-                        </li>
-
+                        else
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="InterviewCategories" asp-action="Index">Interview Practice</a></li>
+                            @if (isAuthenticated)
+                            {
+                                <li class="nav-item"><a class="nav-link" asp-controller="InterviewSessions" asp-action="History">My Interviews</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="InterviewSessions" asp-action="Progress">My Progress</a></li>
+                            }
+                        }
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Privacy">Privacy</a></li>
                     </ul>
 
                     <ul class="navbar-nav ms-auto align-items-lg-center">
@@ -216,6 +195,25 @@
          MOBILE BOTTOM NAVIGATION
          ===================================== -->
 
+    @if (isAdministrator)
+    {
+        <nav class="mobile-bottom-nav" aria-label="Administrator mobile navigation">
+            <a asp-controller="Admin" asp-action="Index" class="mobile-nav-link @(isAdminPage ? "active" : "")" aria-current="@(isAdminPage ? "page" : null)">
+                <span class="mobile-nav-icon" aria-hidden="true">⌂</span><span>Dashboard</span>
+            </a>
+            <a asp-controller="AdminQuestions" asp-action="Index" class="mobile-nav-link @(currentController == "AdminQuestions" ? "active" : "")" aria-current="@(currentController == "AdminQuestions" ? "page" : null)">
+                <span class="mobile-nav-icon" aria-hidden="true">?</span><span>Questions</span>
+            </a>
+            <a asp-controller="AdminReports" asp-action="Index" class="mobile-nav-link @(currentController == "AdminReports" ? "active" : "")" aria-current="@(currentController == "AdminReports" ? "page" : null)">
+                <span class="mobile-nav-icon" aria-hidden="true">▥</span><span>Reports</span>
+            </a>
+            <a asp-controller="AdminUsers" asp-action="Index" class="mobile-nav-link @(currentController == "AdminUsers" ? "active" : "")" aria-current="@(currentController == "AdminUsers" ? "page" : null)">
+                <span class="mobile-nav-icon" aria-hidden="true">♙</span><span>Users</span>
+            </a>
+        </nav>
+    }
+    else
+    {
     <nav class="mobile-bottom-nav"
          aria-label="Mobile navigation">
 
@@ -296,6 +294,8 @@
         </a>
 
     </nav>
+
+    }
 
     <!-- =====================================
          FOOTER
