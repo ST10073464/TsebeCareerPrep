@@ -155,113 +155,113 @@
         </div>
 
         <!-- CANDIDATE FEEDBACK SUMMARY -->
-@{
-    var feedbackItems = (Model.Questions ??
-        new List<TsebeCareerPrep.Mvc.Models.InterviewResultQuestionViewModel>())
-        .Where(q => q.IsAnswered && q.AssessmentFeedback != null)
-        .Select(q => q.AssessmentFeedback!)
-        .ToList();
+        @{
+            var feedbackItems = (Model.Questions ??
+                new List<TsebeCareerPrep.Mvc.Models.InterviewResultQuestionViewModel>())
+                .Where(q => q.IsAnswered && q.AssessmentFeedback != null)
+                .Select(q => q.AssessmentFeedback!)
+                .ToList();
 
-    int assessedAnswers = feedbackItems.Count;
+            int assessedAnswers = feedbackItems.Count;
 
-    int detectedConcepts = feedbackItems.Sum(
-        f => f.DetectedConcepts?.Count ?? 0);
+            int detectedConcepts = feedbackItems.Sum(
+                f => f.DetectedConcepts?.Count ?? 0);
 
-    int conceptsToReview = feedbackItems.Sum(
-        f => f.ConceptsToReview?.Count ?? 0);
+            int conceptsToReview = feedbackItems.Sum(
+                f => f.ConceptsToReview?.Count ?? 0);
 
-    int misconceptionWarnings = feedbackItems.Sum(
-        f => f.PotentialMisconceptions?.Count ?? 0);
-}
-
-<section class="card shadow-sm mb-4"
-         aria-labelledby="candidate-feedback-summary">
-    <div class="card-body p-3 p-md-4">
-
-        <h2 id="candidate-feedback-summary"
-            class="h4 fw-bold mb-2">
-            Your Learning Feedback
-        </h2>
-
-        <p class="text-muted mb-4">
-            This overview highlights learning opportunities
-            from your interview responses. It is not a formal
-            assessment or technical accuracy score.
-        </p>
-
-        <div class="row g-3">
-
-            <div class="col-6 col-lg-3">
-                <div class="border rounded-3 p-3 h-100">
-                    <div class="text-muted small mb-2">
-                        Answers With Feedback
-                    </div>
-                    <div class="fs-3 fw-bold">
-                        @assessedAnswers
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-6 col-lg-3">
-                <div class="border rounded-3 p-3 h-100">
-                    <div class="text-muted small mb-2">
-                        Detected Concepts
-                    </div>
-                    <div class="fs-3 fw-bold">
-                        @detectedConcepts
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-6 col-lg-3">
-                <div class="border rounded-3 p-3 h-100">
-                    <div class="text-muted small mb-2">
-                        Concepts to Review
-                    </div>
-                    <div class="fs-3 fw-bold">
-                        @conceptsToReview
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-6 col-lg-3">
-                <div class="border rounded-3 p-3 h-100">
-                    <div class="text-muted small mb-2">
-                        Potential Misconceptions
-                    </div>
-                    <div class="fs-3 fw-bold">
-                        @misconceptionWarnings
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        @if (assessedAnswers == 0)
-        {
-            <div class="alert alert-info mt-4 mb-0">
-                Learning feedback is not yet available
-                for the answers in this interview.
-            </div>
-        }
-        else if (conceptsToReview > 0 || misconceptionWarnings > 0)
-        {
-            <div class="alert alert-info mt-4 mb-0">
-                Review the question-by-question feedback
-                below to identify areas for improvement.
-            </div>
-        }
-        else
-        {
-            <div class="alert alert-info mt-4 mb-0">
-                Review your answers and suggested answers
-                below to continue improving your skills.
-            </div>
+            int misconceptionWarnings = feedbackItems.Sum(
+                f => f.PotentialMisconceptions?.Count ?? 0);
         }
 
-    </div>
-</section>
-<!-- =====================================
+        <section class="card shadow-sm mb-4"
+                 aria-labelledby="candidate-feedback-summary">
+            <div class="card-body p-3 p-md-4">
+
+                <h2 id="candidate-feedback-summary"
+                    class="h4 fw-bold mb-2">
+                    Your Learning Feedback
+                </h2>
+
+                <p class="text-muted mb-4">
+                    This overview highlights learning opportunities
+                    from your interview responses. It is not a formal
+                    assessment or technical accuracy score.
+                </p>
+
+                <div class="row g-3">
+
+                    <div class="col-6 col-lg-3">
+                        <div class="border rounded-3 p-3 h-100">
+                            <div class="text-muted small mb-2">
+                                Answers With Feedback
+                            </div>
+                            <div class="fs-3 fw-bold">
+                                @assessedAnswers
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-lg-3">
+                        <div class="border rounded-3 p-3 h-100">
+                            <div class="text-muted small mb-2">
+                                Detected Concepts
+                            </div>
+                            <div class="fs-3 fw-bold">
+                                @detectedConcepts
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-lg-3">
+                        <div class="border rounded-3 p-3 h-100">
+                            <div class="text-muted small mb-2">
+                                Concepts to Review
+                            </div>
+                            <div class="fs-3 fw-bold">
+                                @conceptsToReview
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-lg-3">
+                        <div class="border rounded-3 p-3 h-100">
+                            <div class="text-muted small mb-2">
+                                Potential Misconceptions
+                            </div>
+                            <div class="fs-3 fw-bold">
+                                @misconceptionWarnings
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                @if (assessedAnswers == 0)
+                {
+                    <div class="alert alert-info mt-4 mb-0">
+                        Learning feedback is not yet available
+                        for the answers in this interview.
+                    </div>
+                }
+                else if (conceptsToReview > 0 || misconceptionWarnings > 0)
+                {
+                    <div class="alert alert-info mt-4 mb-0">
+                        Review the question-by-question feedback
+                        below to identify areas for improvement.
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info mt-4 mb-0">
+                        Review your answers and suggested answers
+                        below to continue improving your skills.
+                    </div>
+                }
+
+            </div>
+        </section>
+        <!-- =====================================
              QUESTION-BY-QUESTION REVIEW
              ===================================== -->
         @if (Model.Questions?.Any() == true)
@@ -418,12 +418,12 @@
 
                     </div>
 
-                    <!-- ASSESSMENT FEEDBACK -->
+                    <!-- LEARNING FEEDBACK -->
                     @if (question.IsAnswered)
                     {
                         <div class="interview-result-answer-block">
                             <h4 class="interview-result-suggested-title">
-                                Assessment Feedback
+                                Learning Feedback
                             </h4>
 
                             @if (question.AssessmentFeedback != null)
@@ -460,34 +460,46 @@
                                     </div>
                                 }
 
-                                <h5 class="fs-6">Detected Concepts</h5>
-                                @if (feedback.DetectedConcepts.Any())
+                                @if (feedback.DetectedConcepts?.Any() == true)
                                 {
-                                    <ul>
-                                        @foreach (var concept in feedback.DetectedConcepts)
-                                        {
-                                            <li>@concept</li>
-                                        }
-                                    </ul>
+                                    <section class="alert alert-success mb-3"
+                                             aria-label="Detected concepts">
+                                        <h5 class="fs-6 fw-bold mb-2">Detected Concepts</h5>
+                                        <ul class="mb-0">
+                                            @foreach (var concept in feedback.DetectedConcepts)
+                                            {
+                                                <li>@concept</li>
+                                            }
+                                        </ul>
+                                    </section>
                                 }
                                 else
                                 {
-                                    <p class="text-muted">No expected phrases were detected.</p>
+                                    <div class="alert alert-info mb-3">
+                                        <strong>Detected Concepts:</strong>
+                                        No expected phrases were detected in this answer.
+                                    </div>
                                 }
 
-                                <h5 class="fs-6">Concepts to Review</h5>
-                                @if (feedback.ConceptsToReview.Any())
+                                @if (feedback.ConceptsToReview?.Any() == true)
                                 {
-                                    <ul>
-                                        @foreach (var concept in feedback.ConceptsToReview)
-                                        {
-                                            <li>@concept</li>
-                                        }
-                                    </ul>
+                                    <section class="alert alert-warning mb-3"
+                                             aria-label="Concepts to review">
+                                        <h5 class="fs-6 fw-bold mb-2">Concepts to Review</h5>
+                                        <ul class="mb-0">
+                                            @foreach (var concept in feedback.ConceptsToReview)
+                                            {
+                                                <li>@concept</li>
+                                            }
+                                        </ul>
+                                    </section>
                                 }
-                                else
+                                else if (feedback.DetectedConcepts?.Any() == true)
                                 {
-                                    <p class="text-muted">All listed expected phrases were detected.</p>
+                                    <div class="alert alert-success mb-3">
+                                        All configured expected phrases were detected.
+                                        This does not establish technical correctness.
+                                    </div>
                                 }
 
                                 @if (feedback.PotentialMisconceptions?.Any() == true)
@@ -540,12 +552,29 @@
                                     </p>
                                 }
                             }
+
                             else
                             {
-                                <p class="text-muted mb-0">
-                                    Assessment feedback is not available for this answer.
-                                </p>
+                                <div class="alert alert-info mb-0"
+                                     role="status">
+                                    <h5 class="fs-6 fw-bold mb-2">
+                                        Learning Feedback Not Yet Available
+                                    </h5>
+
+                                    <p class="mb-2">
+                                        Your answer has been saved successfully.
+                                        Automated learning feedback is not available
+                                        for this question at present.
+                                    </p>
+
+                                    <p class="mb-0 small">
+                                        You can review the suggested answer above
+                                        to identify concepts and examples that may
+                                        strengthen your response.
+                                    </p>
+                                </div>
                             }
+
                         </div>
                     }
 

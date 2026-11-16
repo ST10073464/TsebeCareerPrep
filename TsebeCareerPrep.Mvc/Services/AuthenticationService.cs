@@ -30,14 +30,18 @@ namespace TsebeCareerPrep.Mvc.Services
                 password = model.Password
             };
 
-            using var response = await _httpClient.PostAsJsonAsync(
-                "api/Auth/login",
-                request);
+            using var response =
+                await _httpClient.PostAsJsonAsync(
+                    "api/Auth/login",
+                    request);
 
-            if (response.StatusCode != HttpStatusCode.OK)
+            if (response.StatusCode == HttpStatusCode.Unauthorized ||
+                response.StatusCode == HttpStatusCode.BadRequest)
             {
                 return null;
             }
+
+            response.EnsureSuccessStatusCode();
 
             var loginResponse = await response.Content
                 .ReadFromJsonAsync<LoginResponse>();
@@ -46,20 +50,23 @@ namespace TsebeCareerPrep.Mvc.Services
                 string.IsNullOrWhiteSpace(loginResponse.UserId) ||
                 string.IsNullOrWhiteSpace(loginResponse.Email))
             {
-                return null;
+                throw new InvalidOperationException(
+                    "The API returned an incomplete login response.");
             }
 
             if (!response.Headers.TryGetValues(
                 "Set-Cookie",
                 out var cookies))
             {
-                return null;
+                throw new InvalidOperationException(
+                    "The API did not return an authentication cookie.");
             }
 
             const string cookieName = "TsebeCareerPrep.Auth=";
 
             var authenticationCookie = cookies
-                .Select(cookie => cookie.Split(';', 2)[0].Trim())
+                .Select(cookie =>
+                    cookie.Split(';', 2)[0].Trim())
                 .FirstOrDefault(cookie =>
                     cookie.StartsWith(
                         cookieName,
@@ -67,7 +74,8 @@ namespace TsebeCareerPrep.Mvc.Services
 
             if (string.IsNullOrWhiteSpace(authenticationCookie))
             {
-                return null;
+                throw new InvalidOperationException(
+                    "The API authentication cookie was missing.");
             }
 
             return new ApiLoginResult

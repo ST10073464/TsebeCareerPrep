@@ -9,13 +9,21 @@ var builder = WebApplication.CreateBuilder(args);
 // 1. SHARED DATA PROTECTION
 // ======================================================
 
-// Use the same Data Protection key ring as the API.
-var sharedKeysPath = Path.GetFullPath(
-    Path.Combine(
-        builder.Environment.ContentRootPath,
-        "..",
-        "SharedAuthKeys"));
+// Read the configured key directory.
+// Azure uses DataProtection__KeysPath.
+// If no path is configured, use a writable temporary
+// directory instead of a restricted root directory.
 
+var configuredKeysPath =
+    builder.Configuration["DataProtection:KeysPath"];
+
+var sharedKeysPath = string.IsNullOrWhiteSpace(configuredKeysPath)
+    ? Path.Combine(
+        Path.GetTempPath(),
+        "TsebeCareerPrepKeys")
+    : configuredKeysPath;
+
+// Create the directory before configuring Data Protection.
 Directory.CreateDirectory(sharedKeysPath);
 
 builder.Services.AddDataProtection()
@@ -68,9 +76,7 @@ builder.Services.AddHttpClient<
     .ConfigurePrimaryHttpMessageHandler(() =>
         new HttpClientHandler
         {
-            // Do not store or automatically forward cookies.
-            // This prevents cookies from being shared
-            // between users through pooled HTTP handlers.
+            // Prevent cookies from being shared between users.
             UseCookies = false
         });
 
@@ -107,7 +113,7 @@ builder.Services
 
 
 // ======================================================
-// AUTHENTICATED INTERVIEW API HTTP CLIENT
+// 6. AUTHENTICATED INTERVIEW API HTTP CLIENT
 // ======================================================
 
 builder.Services.AddTransient<
@@ -124,7 +130,6 @@ builder.Services.AddHttpClient(
 
         client.BaseAddress = new Uri(apiBaseUrl);
 
-        // Prevent credentials being forwarded through redirects.
         client.DefaultRequestVersion =
             HttpVersion.Version11;
     })
@@ -138,23 +143,22 @@ builder.Services.AddHttpClient(
         });
 
 
-
 // ======================================================
-// 6. AUTHORIZATION
+// 7. AUTHORIZATION
 // ======================================================
 
 builder.Services.AddAuthorization();
 
 
 // ======================================================
-// 7. BUILD APPLICATION
+// 8. BUILD APPLICATION
 // ======================================================
 
 var app = builder.Build();
 
 
 // ======================================================
-// 8. HTTP REQUEST PIPELINE
+// 9. HTTP REQUEST PIPELINE
 // ======================================================
 
 if (!app.Environment.IsDevelopment())
@@ -169,14 +173,13 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// Authentication must run before authorization.
 app.UseAuthentication();
 
 app.UseAuthorization();
 
 
 // ======================================================
-// 9. MVC ROUTING
+// 10. MVC ROUTING
 // ======================================================
 
 app.MapControllerRoute(

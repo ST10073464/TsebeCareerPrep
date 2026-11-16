@@ -7,20 +7,40 @@ using TsebeCareerPrep.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Register the system time provider required by Identity services.
+// ======================================================
+// 1. SYSTEM TIME PROVIDER
+// ======================================================
+
 builder.Services.AddSingleton<TimeProvider>(
     TimeProvider.System);
 
 
-// Configure a shared Data Protection key ring
-// for the API and MVC applications.
-var sharedKeysPath = Path.GetFullPath(
-    Path.Combine(
-        builder.Environment.ContentRootPath,
-        "..",
-        "SharedAuthKeys"));
+// ======================================================
+// 2. DATA PROTECTION
+// ======================================================
+
+// Read the configured Data Protection directory.
+// Azure environment variable:
+// DataProtection__KeysPath=/tmp/TsebeCareerPrepKeys
+
+var configuredKeysPath =
+    builder.Configuration["DataProtection:KeysPath"];
+
+// Use a writable temporary directory when no path
+// has been configured.
+
+var sharedKeysPath =
+    string.IsNullOrWhiteSpace(configuredKeysPath)
+        ? Path.Combine(
+            Path.GetTempPath(),
+            "TsebeCareerPrepKeys")
+        : configuredKeysPath;
+
+// Ensure the directory exists.
 
 Directory.CreateDirectory(sharedKeysPath);
+
+// Configure Data Protection.
 
 builder.Services.AddDataProtection()
     .SetApplicationName("TsebeCareerPrep")
@@ -28,14 +48,23 @@ builder.Services.AddDataProtection()
         new DirectoryInfo(sharedKeysPath));
 
 
-// SQL Server database connection.
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"));
-});
+// ======================================================
+// 3. SQL SERVER DATABASE
+// ======================================================
 
-// ASP.NET Core Identity configuration.
+builder.Services.AddDbContext<ApplicationDbContext>(
+    options =>
+    {
+        options.UseSqlServer(
+            builder.Configuration.GetConnectionString(
+                "DefaultConnection"));
+    });
+
+
+// ======================================================
+// 4. ASP.NET CORE IDENTITY
+// ======================================================
+
 builder.Services
     .AddIdentityCore<IdentityUser>(options =>
     {
@@ -47,7 +76,6 @@ builder.Services
         options.Password.RequireUppercase = true;
         options.Password.RequireNonAlphanumeric = true;
 
-        // Development testing: lock accounts for 30 seconds.
         options.Lockout.DefaultLockoutTimeSpan =
             TimeSpan.FromSeconds(30);
 
@@ -59,6 +87,10 @@ builder.Services
     .AddDefaultTokenProviders();
 
 
+// ======================================================
+// 5. AUTHENTICATION
+// ======================================================
+
 builder.Services
     .AddAuthentication(
         IdentityConstants.ApplicationScheme)
@@ -69,9 +101,12 @@ builder.Services.AddAuthorization();
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = "TsebeCareerPrep.Auth";
+
     options.Cookie.HttpOnly = true;
+
     options.Cookie.SecurePolicy =
         CookieSecurePolicy.Always;
+
     options.Cookie.SameSite =
         SameSiteMode.Lax;
 
@@ -80,8 +115,6 @@ builder.Services.ConfigureApplicationCookie(options =>
 
     options.SlidingExpiration = true;
 
-    // API endpoints should return HTTP status codes,
-    // not redirect to HTML login pages.
     options.Events.OnRedirectToLogin = context =>
     {
         context.Response.StatusCode =
@@ -100,88 +133,132 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 
-// API controllers and Swagger.
+// ======================================================
+// 6. API CONTROLLERS AND SWAGGER
+// ======================================================
+
 builder.Services.AddControllers();
+
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen();
 
 
-// Register the interview assessment service.
+// ======================================================
+// 7. INTERVIEW ASSESSMENT SERVICE
+// ======================================================
+
 builder.Services.AddScoped<
     IInterviewAssessmentService,
     InterviewAssessmentService>();
 
-// Use Google Gemini for provisional AI assessments.
-//builder.Services.AddScoped<
-//    IAiInterviewAssessmentService,
-//   GeminiInterviewAssessmentService>();
 
+// ======================================================
+// 8. OPENAI HTTP CLIENT
+// ======================================================
 
 builder.Services.AddHttpClient("OpenAI", client =>
 {
-    var baseUrl = builder.Configuration["OpenAI:BaseUrl"]
+    var baseUrl =
+        builder.Configuration["OpenAI:BaseUrl"]
         ?? "https://api.openai.com/v1";
 
-    var timeoutSeconds = builder.Configuration
-        .GetValue<int?>("OpenAI:TimeoutSeconds") ?? 30;
+    var timeoutSeconds =
+        builder.Configuration.GetValue<int?>(
+            "OpenAI:TimeoutSeconds") ?? 30;
 
-    client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
-    client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
+    client.BaseAddress =
+        new Uri(baseUrl.TrimEnd('/') + "/");
+
+    client.Timeout =
+        TimeSpan.FromSeconds(timeoutSeconds);
 });
 
 
-
+// ======================================================
+// 9. BUILD APPLICATION
+// ======================================================
 
 var app = builder.Build();
 
-// Ensure the Administrator role exists.
-// This does not assign the role to any user.
+
+// ======================================================
+// 10. ENSURE ADMINISTRATOR ROLE EXISTS
+// ======================================================
+
 using (var scope = app.Services.CreateScope())
 {
-    var roleManager = scope.ServiceProvider
-        .GetRequiredService<RoleManager<IdentityRole>>();
+    var roleManager =
+        scope.ServiceProvider
+            .GetRequiredService<
+                RoleManager<IdentityRole>>();
 
-    const string administratorRole = "Administrator";
+    const string administratorRole =
+        "Administrator";
 
-    if (!await roleManager.RoleExistsAsync(administratorRole))
+    if (!await roleManager.RoleExistsAsync(
+        administratorRole))
     {
-        var result = await roleManager.CreateAsync(
-            new IdentityRole(administratorRole));
+        var result =
+            await roleManager.CreateAsync(
+                new IdentityRole(
+                    administratorRole));
 
         if (!result.Succeeded)
         {
             throw new InvalidOperationException(
                 "Unable to create the Administrator role: " +
                 string.Join("; ",
-                    result.Errors.Select(e => e.Description)));
+                    result.Errors.Select(
+                        e => e.Description)));
         }
     }
 }
 
 
-// Preserve existing development database seeding.
+// ======================================================
+// 11. DEVELOPMENT DATABASE SEEDING
+// ======================================================
+
 if (app.Environment.IsDevelopment())
 {
     using (var scope = app.Services.CreateScope())
     {
-        var context = scope.ServiceProvider
-            .GetRequiredService<ApplicationDbContext>();
+        var context =
+            scope.ServiceProvider
+                .GetRequiredService<
+                    ApplicationDbContext>();
 
         await DatabaseSeeder.SeedAsync(context);
     }
 }
 
-// Swagger is available during development.
+
+// ======================================================
+// 12. SWAGGER
+// ======================================================
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+
+// ======================================================
+// 13. HTTP REQUEST PIPELINE
+// ======================================================
+
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
+
 app.UseAuthorization();
+
+
+// ======================================================
+// 14. API ENDPOINTS
+// ======================================================
 
 app.MapControllers();
 

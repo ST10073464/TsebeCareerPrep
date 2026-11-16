@@ -73,6 +73,15 @@ namespace TsebeCareerPrep.Mvc.Controllers
                 model.Password = string.Empty;
                 return View(model);
             }
+            catch (InvalidOperationException)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Authentication succeeded, but the server could not complete the sign-in. Please try again.");
+
+                model.Password = string.Empty;
+                return View(model);
+            }
 
             if (loginResult == null)
             {

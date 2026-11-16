@@ -1,0 +1,49 @@
+
+name: tsebe-careerprep
+
+services:
+  api:
+    container_name: tsebe-careerprep-api
+    build:
+      context: .
+      dockerfile: TsebeCareerPrep.Api/Dockerfile
+
+    ports:
+      - "8101:8080"
+
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      DataProtection__KeysPath: /app/keys
+      ConnectionStrings__DefaultConnection: ${TSEBE_DB_CONNECTION:?Set TSEBE_DB_CONNECTION in .env}
+
+    volumes:
+      - tsebe-auth-keys:/app/keys
+
+    restart: unless-stopped
+
+  mvc:
+    container_name: tsebe-careerprep-mvc
+    build:
+      context: .
+      dockerfile: TsebeCareerPrep.Mvc/Dockerfile
+
+    ports:
+      - "8102:8080"
+
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ApiSettings__BaseUrl: http://api:8080/
+      DataProtection__KeysPath: /app/keys
+
+    volumes:
+      - tsebe-auth-keys:/app/keys
+
+    depends_on:
+      - api
+
+    restart: unless-stopped
+
+volumes:
+  tsebe-auth-keys:

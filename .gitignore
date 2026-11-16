@@ -430,3 +430,9 @@ FodyWeavers.xsd
 # Tsebe CareerPrep - Shared Authentication
 # Never commit ASP.NET Core Data Protection keys.
 SharedAuthKeys/
+
+
+# Local Docker environment secrets
+.env
+.env.*
+!.env.example
