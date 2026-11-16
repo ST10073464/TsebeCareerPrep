@@ -22,7 +22,7 @@ namespace TsebeCareerPrep.Mvc.Services
 
             if (context?.User.Identity?.IsAuthenticated == true &&
                 context.Request.Cookies.TryGetValue(
-                    "TsebeCareerPrep.Auth",
+                    "TsebeCareerPrep.ApiAuth",
                     out var authenticationTicket) &&
                 !string.IsNullOrWhiteSpace(authenticationTicket))
             {
@@ -31,7 +31,9 @@ namespace TsebeCareerPrep.Mvc.Services
                     $"TsebeCareerPrep.Auth={authenticationTicket}");
             }
 
-            return base.SendAsync(request, cancellationToken);
+            return base.SendAsync(
+                request,
+                cancellationToken);
         }
     }
 }
