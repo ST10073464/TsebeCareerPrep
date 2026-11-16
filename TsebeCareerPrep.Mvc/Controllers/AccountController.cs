@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using TsebeCareerPrep.Mvc.Models;
 
 using AuthenticationService =
@@ -88,7 +89,10 @@ namespace TsebeCareerPrep.Mvc.Controllers
                 loginResult.AuthenticationCookie.Split('=', 2);
 
             if (cookieParts.Length != 2 ||
-                string.IsNullOrWhiteSpace(cookieParts[0]) ||
+                !string.Equals(
+                    cookieParts[0],
+                    "TsebeCareerPrep.Auth",
+                    StringComparison.Ordinal) ||
                 string.IsNullOrWhiteSpace(cookieParts[1]))
             {
                 ModelState.AddModelError(
@@ -99,9 +103,9 @@ namespace TsebeCareerPrep.Mvc.Controllers
                 return View(model);
             }
 
-            // Preserve the existing Identity cookie integration.
+            // Store the API authentication ticket separately.
             Response.Cookies.Append(
-                cookieParts[0],
+                "TsebeCareerPrep.ApiAuth",
                 cookieParts[1],
                 new CookieOptions
                 {
@@ -110,6 +114,43 @@ namespace TsebeCareerPrep.Mvc.Controllers
                     SameSite = SameSiteMode.Lax,
                     Path = "/",
                     IsEssential = true
+                });
+
+            // Create the MVC authentication claims.
+            var claims = new List<Claim>
+            {
+                new Claim(
+                    ClaimTypes.NameIdentifier,
+                    loginResult.User.UserId),
+
+                new Claim(
+                    ClaimTypes.Name,
+                    loginResult.User.Email),
+
+                new Claim(
+                    ClaimTypes.Email,
+                    loginResult.User.Email),
+
+                new Claim(
+                    ClaimTypes.Role,
+                    loginResult.User.Role)
+            };
+
+            // Create the MVC authentication identity.
+            var identity = new ClaimsIdentity(
+                claims,
+                IdentityConstants.ApplicationScheme);
+
+            var principal = new ClaimsPrincipal(identity);
+
+            // Issue a separate MVC authentication cookie.
+            await HttpContext.SignInAsync(
+                IdentityConstants.ApplicationScheme,
+                principal,
+                new AuthenticationProperties
+                {
+                    IsPersistent = false,
+                    AllowRefresh = true
                 });
 
             // Respect valid local return URLs.
@@ -143,10 +184,17 @@ namespace TsebeCareerPrep.Mvc.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
+            // Sign out of MVC.
             await HttpContext.SignOutAsync(
                 IdentityConstants.ApplicationScheme);
 
-            return RedirectToAction("Login", "Account");
+            // Remove the separate API authentication ticket.
+            Response.Cookies.Delete(
+                "TsebeCareerPrep.ApiAuth");
+
+            return RedirectToAction(
+                "Login",
+                "Account");
         }
     }
 }
