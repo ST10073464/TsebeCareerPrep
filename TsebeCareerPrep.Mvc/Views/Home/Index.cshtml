@@ -1,458 +1,155 @@
-﻿@{
-    ViewData["Title"] = "Prepare for Your Career";
-
+@{
+    ViewData["Title"] = "Interview Practice That Builds Confidence";
     var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var practiceController = isAuthenticated ? "InterviewCategories" : "Account";
+    var practiceAction = isAuthenticated ? "Index" : "Register";
 }
 
-<!-- =========================================
-     DESKTOP HERO
-     Existing design preserved
-     ========================================= -->
-
-<section class="career-hero desktop-home-hero">
-    <div class="container">
-        <div class="career-hero-content">
-
-            <p class="hero-eyebrow mb-3">
-                Your career journey starts here
-            </p>
-
-            <h1 class="mb-4">
-                Prepare with Confidence.
-                <span class="hero-highlight d-block">
-                    Advance Your Career.
-                </span>
-            </h1>
-
-            <p class="lead mb-4">
-                Every career opportunity begins with preparation.
-                Tsebe CareerPrep helps you build interview
-                confidence, improve your communication skills,
-                and practise presenting your knowledge and
-                experience professionally.
-            </p>
-
-            <p class="mb-4">
-                Whether you are preparing for your first job,
-                entering a new industry, or pursuing career
-                advancement, developing your interview skills
-                can help you approach opportunities with
-                greater confidence.
-            </p>
-
-            <div class="hero-actions d-flex flex-wrap gap-3">
-
-                <a asp-controller="InterviewCategories"
-                   asp-action="Index"
-                   class="btn btn-primary btn-lg px-4">
-                    Start Practising
-                </a>
-
-                @if (!isAuthenticated)
-                {
-                    <a asp-controller="Account"
-                       asp-action="Login"
-                       class="btn btn-light btn-lg px-4">
-                        Log In
+<div class="landing-page">
+    <section class="landing-hero">
+        <div class="container landing-hero-grid">
+            <div class="landing-hero-copy">
+                <span class="landing-eyebrow"><span class="landing-eyebrow-dot"></span> PRACTISE WITH PURPOSE</span>
+                <h1>Walk into your next interview <span>ready.</span></h1>
+                <p class="landing-lead">Build confidence through realistic interview practice, useful feedback and a clear view of your progress.</p>
+                <div class="landing-hero-actions">
+                    <a asp-controller="@practiceController" asp-action="@practiceAction" class="btn landing-button-primary">
+                        Start practising <span aria-hidden="true">→</span>
                     </a>
-                }
-                else
-                {
-                    <a asp-controller="InterviewSessions"
-                       asp-action="History"
-                       class="btn btn-light btn-lg px-4">
-                        My Interview History
-                    </a>
-                }
-
-            </div>
-        </div>
-    </div>
-</section>
-
-
-<!-- =========================================
-     MOBILE APP-STYLE HOMEPAGE
-     ========================================= -->
-
-<section class="mobile-home">
-
-    <!-- Mobile welcome panel -->
-
-    <div class="mobile-welcome">
-
-        <p class="mobile-welcome-eyebrow">
-            YOUR CAREER JOURNEY
-        </p>
-
-        <h1>
-            Prepare with
-            <span>Confidence.</span>
-        </h1>
-
-        <p class="mobile-welcome-highlight">
-            Advance Your Career.
-        </p>
-
-        <p class="mobile-welcome-description">
-            Build your interview skills, strengthen your
-            confidence and prepare for your next
-            career opportunity.
-        </p>
-
-        <a asp-controller="InterviewCategories"
-           asp-action="Index"
-           class="btn btn-primary mobile-start-button">
-            Start Practising
-        </a>
-
-        @if (!isAuthenticated)
-        {
-            <p class="mobile-login-prompt">
-                Already have an account?
-                <a asp-controller="Account"
-                   asp-action="Login">
-                    Log In
-                </a>
-            </p>
-        }
-
-    </div>
-
-
-    <!-- Mobile quick-access section -->
-
-    <div class="mobile-home-content">
-
-        <div class="mobile-section-heading">
-            <h2>Explore CareerPrep</h2>
-            <p>
-                Everything you need to begin preparing.
-            </p>
-        </div>
-
-        <div class="mobile-quick-grid">
-
-            <a asp-controller="InterviewCategories"
-               asp-action="Index"
-               class="mobile-quick-card">
-
-                <span class="mobile-quick-icon"
-                      aria-hidden="true">
-                    💼
-                </span>
-
-                <span class="mobile-quick-title">
-                    Interview Practice
-                </span>
-
-                <span class="mobile-quick-description">
-                    Explore questions
-                </span>
-            </a>
-
-            <a asp-controller="@(isAuthenticated ? "InterviewSessions" : "Account")"
-               asp-action="@(isAuthenticated ? "History" : "Login")"
-               class="mobile-quick-card">
-
-                <span class="mobile-quick-icon"
-                      aria-hidden="true">
-                    📋
-                </span>
-
-                <span class="mobile-quick-title">
-                    My Interviews
-                </span>
-
-                <span class="mobile-quick-description">
-                    Review your sessions
-                </span>
-            </a>
-
-            <a asp-controller="@(isAuthenticated ? "InterviewSessions" : "Account")"
-               asp-action="@(isAuthenticated ? "Progress" : "Login")"
-               class="mobile-quick-card">
-
-                <span class="mobile-quick-icon"
-                      aria-hidden="true">
-                    📈
-                </span>
-
-                <span class="mobile-quick-title">
-                    My Progress
-                </span>
-
-                <span class="mobile-quick-description">
-                    Track your growth
-                </span>
-            </a>
-
-            <a asp-controller="@(isAuthenticated ? "InterviewSessions" : "Account")"
-               asp-action="@(isAuthenticated ? "History" : "Login")"
-               class="mobile-quick-card">
-
-                <span class="mobile-quick-icon"
-                      aria-hidden="true">
-                    👤
-                </span>
-
-                <span class="mobile-quick-title">
-                    @(isAuthenticated ? "My Activity" : "My Account")
-                </span>
-
-                <span class="mobile-quick-description">
-                    @(isAuthenticated ? "View interview history" : "Log in to continue")
-                </span>
-            </a>
-
-        </div>
-
-
-        <!-- Mobile encouragement -->
-
-        <div class="mobile-encouragement">
-
-            <h2>
-                Small Steps. Stronger Confidence.
-            </h2>
-
-            <p>
-                Every practice session brings you closer
-                to presenting your skills and experience
-                with confidence.
-            </p>
-
-            <a asp-controller="InterviewCategories"
-               asp-action="Index">
-                Explore interview categories
-            </a>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- =========================================
-     WHY INTERVIEW PREPARATION MATTERS
-     ========================================= -->
-
-<section class="container py-5 home-benefits desktop-home-content">
-
-    <div class="text-center mb-5">
-
-        <h2 class="fw-bold">
-            Why Interview Preparation Matters
-        </h2>
-
-        <p class="text-secondary lead">
-            Strong preparation helps you communicate your
-            potential when career opportunities arise.
-        </p>
-
-    </div>
-
-    <div class="row g-4">
-
-        <div class="col-md-4">
-            <div class="card h-100 border-0 shadow-sm rounded-4">
-                <div class="card-body p-4">
-
-                    <div class="fs-2 mb-3" aria-hidden="true">
-                        💼
-                    </div>
-
-                    <h3 class="h5 fw-bold">
-                        Career Readiness
-                    </h3>
-
-                    <p class="text-secondary mb-0">
-                        Prepare to approach job interviews with
-                        confidence. Develop a clearer understanding
-                        of your strengths, experience and career
-                        goals so you can communicate your potential
-                        more effectively.
-                    </p>
-
+                    <a href="#how-it-works" class="landing-button-link">See how it works <span aria-hidden="true">↓</span></a>
                 </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card h-100 border-0 shadow-sm rounded-4">
-                <div class="card-body p-4">
-
-                    <div class="fs-2 mb-3" aria-hidden="true">
-                        👥
-                    </div>
-
-                    <h3 class="h5 fw-bold">
-                        Practical Interview Experience
-                    </h3>
-
-                    <p class="text-secondary mb-0">
-                        Build familiarity with interview questions
-                        through regular practice. Learn to organise
-                        your thoughts and express your knowledge,
-                        skills and experience more clearly.
-                    </p>
-
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card h-100 border-0 shadow-sm rounded-4">
-                <div class="card-body p-4">
-
-                    <div class="fs-2 mb-3" aria-hidden="true">
-                        📈
-                    </div>
-
-                    <h3 class="h5 fw-bold">
-                        Continuous Improvement
-                    </h3>
-
-                    <p class="text-secondary mb-0">
-                        Every practice session is an opportunity
-                        to grow. Review your previous interviews,
-                        reflect on your responses and monitor
-                        your preparation progress over time.
-                    </p>
-
-                </div>
-            </div>
-        </div>
-
-    </div>
-</section>
-
-
-<!-- =========================================
-     HOW TSEBE CAREERPREP WORKS
-     ========================================= -->
-
-<section class="py-5 bg-light home-steps desktop-home-content">
-
-    <div class="container">
-
-        <div class="text-center mb-5">
-
-            <h2 class="fw-bold">
-                How Tsebe CareerPrep Works
-            </h2>
-
-            <p class="text-secondary lead">
-                Begin your interview preparation in
-                three simple steps.
-            </p>
-
-        </div>
-
-        <div class="row g-4 text-center">
-
-            <div class="col-md-4">
-                <div class="p-4 h-100">
-
-                    <div class="fs-1 fw-bold text-primary mb-3">
-                        01
-                    </div>
-
-                    <h3 class="h5 fw-bold">
-                        Choose a Category
-                    </h3>
-
-                    <p class="text-secondary">
-                        Explore available interview categories
-                        and select the area you would like
-                        to practise.
-                    </p>
-
+                <div class="landing-hero-notes">
+                    <span><span aria-hidden="true">✓</span> Practice at your own pace</span>
+                    <span><span aria-hidden="true">✦</span> AI feature previews · Demo only</span>
                 </div>
             </div>
 
-            <div class="col-md-4">
-                <div class="p-4 h-100">
-
-                    <div class="fs-1 fw-bold text-primary mb-3">
-                        02
+            <div class="landing-preview-wrap" aria-label="Preview of a sample interview practice session">
+                <div class="landing-preview-orbit landing-orbit-one"></div>
+                <div class="landing-preview-orbit landing-orbit-two"></div>
+                <div class="landing-preview-card">
+                    <div class="landing-preview-topline">
+                        <span class="landing-live-indicator"><i></i> PRACTICE PREVIEW</span>
+                        <span class="landing-preview-menu" aria-hidden="true">•••</span>
                     </div>
-
-                    <h3 class="h5 fw-bold">
-                        Practise Interview Questions
-                    </h3>
-
-                    <p class="text-secondary">
-                        Work through interview questions,
-                        submit your responses and develop
-                        confidence at your own pace.
-                    </p>
-
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="p-4 h-100">
-
-                    <div class="fs-1 fw-bold text-primary mb-3">
-                        03
+                    <div class="landing-preview-role">
+                        <span class="landing-role-icon" aria-hidden="true">✳</span>
+                        <span><small>AI-TAILORED PRACTICE SESSION</small><strong>Office Administrator</strong></span>
+                        <span class="landing-role-level">STARTER</span>
                     </div>
-
-                    <h3 class="h5 fw-bold">
-                        Review Your Progress
-                    </h3>
-
-                    <p class="text-secondary">
-                        Complete your interview sessions,
-                        review your results and use your
-                        interview history to reflect on
-                        your development.
-                    </p>
-
+                    <div class="landing-preview-progress-label"><span>Question 3 of 8</span><span>38%</span></div>
+                    <div class="landing-progress-track"><span></span></div>
+                    <div class="landing-question-label">YOUR QUESTION</div>
+                    <h2>Tell me about a time you had to manage competing priorities.</h2>
+                    <p class="landing-preview-hint">Take a moment to think of a clear example from your experience.</p>
+                    <div class="landing-preview-controls">
+                        <span class="landing-timer"><span aria-hidden="true">◷</span> 01:30</span>
+                        <span class="landing-writing-label"><span aria-hidden="true">●</span> Video simulation</span>
+                    </div>
+                    <div class="landing-preview-answer">Your answer will appear here as you practise…</div>
+                    <div class="landing-preview-footer"><span>DEMO SCREEN</span><span>Practice makes progress <b>↗</b></span></div>
                 </div>
+                <div class="landing-float-note landing-note-left"><span>✓</span><div><strong>One question at a time</strong><small>Build a steady answer</small></div></div>
+                <div class="landing-float-note landing-note-right"><span class="landing-sparkle">✦</span><div><strong>Your progress</strong><small>See your growth over time</small></div></div>
             </div>
-
         </div>
-    </div>
-</section>
+    </section>
 
-
-<!-- =========================================
-     CAREER CALL TO ACTION
-     ========================================= -->
-
-<section class="container py-5 home-cta desktop-home-content">
-
-    <div class="bg-primary text-white rounded-4 p-4 p-md-5">
-
-        <div class="row align-items-center g-4">
-
-            <div class="col-lg-8">
-
-                <h2 class="fw-bold mb-3">
-                    Take the Next Step in Your Career Journey
-                </h2>
-
-                <p class="lead mb-0">
-                    Your career development is a continuous
-                    journey. Start preparing today, strengthen
-                    your interview skills and build the
-                    confidence to communicate your potential.
-                </p>
-
-            </div>
-
-            <div class="col-lg-4 text-lg-end">
-
-                <a asp-controller="InterviewCategories"
-                   asp-action="Index"
-                   class="btn btn-light btn-lg px-4">
-                    Explore Interview Categories
-                </a>
-
-            </div>
-
+    <section class="landing-proof-strip" aria-label="Platform highlights">
+        <div class="container landing-proof-inner">
+            <span>Built for your next opportunity</span>
+            <div><b>01</b> Role-based questions</div>
+            <div><b>02</b> Guided practice</div>
+            <div><b>03</b> Progress you can review</div>
         </div>
-    </div>
-</section>
+    </section>
+
+    <section class="landing-section landing-features" id="features">
+        <div class="container">
+            <div class="landing-section-heading">
+                <span class="landing-section-kicker">YOUR INTERVIEW PRACTICE TOOLKIT</span>
+                <h2>Practise smarter. Prepare with confidence.</h2>
+                <p>Explore the AI-powered tools planned for CareerPrep. Each AI feature shown here is a simulated product demo.</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-12 col-md-6 col-lg-4"><article class="landing-feature-card"><span class="landing-feature-icon icon-blue" aria-hidden="true">▤</span><h3>Questions for your career path</h3><p>Explore question sets for different roles and interview categories, from first opportunities to your next career move.</p><a asp-controller="InterviewCategories" asp-action="Index">Explore categories <span aria-hidden="true">→</span></a></article></div>
+                <div class="col-12 col-md-6 col-lg-4"><article class="landing-feature-card"><span class="landing-feature-icon icon-purple" aria-hidden="true">◷</span><h3>Realistic practice sessions</h3><p>Work through interview questions at a steady pace with a simple timer and space to shape your answers.</p><a href="#practice-demo">Preview a session <span aria-hidden="true">→</span></a></article></div>
+                <div class="col-12 col-md-6 col-lg-4"><article class="landing-feature-card"><span class="landing-feature-icon icon-green" aria-hidden="true">✦</span><h3>AI live feedback</h3><p>Preview coaching on clarity, confidence, tone, speaking pace and filler words while you practise.</p><a href="#practice-demo">See live feedback demo <span aria-hidden="true">→</span></a></article></div>
+                <div class="col-12 col-md-6 col-lg-4"><article class="landing-feature-card"><span class="landing-feature-icon icon-orange" aria-hidden="true">◉</span><h3>Video interview simulator</h3><p>Practise on camera with a timer, playback and simulated observations on delivery and body language.</p><a href="#practice-demo">Preview the simulator <span aria-hidden="true">→</span></a></article></div>
+                <div class="col-12 col-md-6 col-lg-4"><article class="landing-feature-card"><span class="landing-feature-icon icon-teal" aria-hidden="true">⌕</span><h3>Questions tailored to you</h3><p>See a demo of questions matched to your target role, job description and CV or candidate profile.</p><a href="#practice-demo">Explore tailored practice <span aria-hidden="true">→</span></a></article></div>
+                <div class="col-12 col-md-6 col-lg-4"><article class="landing-feature-card"><span class="landing-feature-icon icon-blue" aria-hidden="true">▥</span><h3>Personal feedback scorecard</h3><p>Review sample insights on answer structure, relevant examples, tone and areas to work on next.</p><a href="#practice-demo">See a sample scorecard <span aria-hidden="true">→</span></a></article></div>
+                <div class="col-12 col-md-6 col-lg-4"><article class="landing-feature-card"><span class="landing-feature-icon icon-orange" aria-hidden="true">▣</span><h3>Keep your practice history</h3><p>Return to previous sessions and see the questions you have already worked through.</p><a asp-controller="@(isAuthenticated ? "InterviewSessions" : "Account")" asp-action="@(isAuthenticated ? "History" : "Register")">View your practice space <span aria-hidden="true">→</span></a></article></div>
+                <div class="col-12 col-md-6 col-lg-4"><article class="landing-feature-card"><span class="landing-feature-icon icon-teal" aria-hidden="true">↗</span><h3>Track your development</h3><p>Use your practice history and results to notice progress, revisit topics and prepare with intention.</p><a asp-controller="@(isAuthenticated ? "InterviewSessions" : "Account")" asp-action="@(isAuthenticated ? "Progress" : "Register")">See progress tools <span aria-hidden="true">→</span></a></article></div>
+                <div class="col-12 col-md-6 col-lg-4"><article class="landing-feature-card"><span class="landing-feature-icon icon-pink" aria-hidden="true">♡</span><h3>Encouragement from others</h3><p>Read illustrative success-story examples and make room for real candidate journeys as the platform grows.</p><a href="#success-stories">Visit success stories <span aria-hidden="true">→</span></a></article></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-demo-section" id="practice-demo">
+        <div class="container landing-demo-grid">
+            <div class="landing-demo-copy">
+                <span class="landing-section-kicker">AI LIVE FEEDBACK · DEMO</span>
+                <h2>See the coaching experience we’re building.</h2>
+                <p>Imagine practising with instant pointers on filler words, pace, clarity, tone and confidence—plus questions tailored to your target role. This preview demonstrates the planned experience; it does not connect to a live AI service.</p>
+                <a asp-controller="@practiceController" asp-action="@practiceAction" class="btn landing-button-primary">Try interview practice <span aria-hidden="true">→</span></a>
+                <small class="landing-demo-disclaimer">Product demo · AI analysis and live coaching are simulated</small>
+            </div>
+            <div class="landing-feedback-card">
+                <div class="landing-feedback-header"><div><span class="landing-feedback-label">SIMULATED LIVE SESSION</span><strong>Prioritising tasks</strong></div><span class="landing-feedback-badge">AI DEMO</span></div>
+                <div class="landing-live-status"><i></i> Feedback preview updating <span>00:24</span></div>
+                <div class="landing-live-insights"><div><small>FILLER WORDS</small><strong>3 <span>sample</span></strong></div><div><small>SPEAKING PACE</small><strong>Steady</strong></div><div><small>TONE & CONFIDENCE</small><strong>Positive</strong></div></div>
+                <div class="landing-feedback-meter"><div><span>Answer structure</span><strong>Developing</strong></div><div class="landing-meter-track"><i style="width:68%"></i></div></div>
+                <div class="landing-feedback-meter"><div><span>Specific example</span><strong>Good start</strong></div><div class="landing-meter-track meter-green"><i style="width:78%"></i></div></div>
+                <div class="landing-feedback-meter"><div><span>Outcome explained</span><strong>Try adding detail</strong></div><div class="landing-meter-track meter-orange"><i style="width:48%"></i></div></div>
+                <div class="landing-feedback-meter"><div><span>Delivery & body language</span><strong>Video demo</strong></div><div class="landing-meter-track meter-green"><i style="width:72%"></i></div></div>
+                <div class="landing-feedback-tip"><span aria-hidden="true">✦</span><p><strong>Personalised practice tip</strong><br />Explain what changed because of your actions. A specific result helps the interviewer understand your contribution.</p></div>
+                <div class="landing-feedback-footnote">Simulated example only · No audio or video is analysed</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-section landing-how" id="how-it-works">
+        <div class="container">
+            <div class="landing-section-heading">
+                <span class="landing-section-kicker">SIMPLE TO GET STARTED</span>
+                <h2>Make every practice session count</h2>
+                <p>Build a routine that helps you walk into an interview with a plan.</p>
+            </div>
+            <div class="landing-steps-grid">
+                <article class="landing-step"><span class="landing-step-number">01</span><h3>Choose your focus</h3><p>Select an interview category or role that matches the opportunity you are preparing for.</p></article>
+                <article class="landing-step"><span class="landing-step-number">02</span><h3>Practise your answers</h3><p>Work through realistic questions and organise your experience into clear examples.</p></article>
+                <article class="landing-step"><span class="landing-step-number">03</span><h3>Review and improve</h3><p>Reflect on structured feedback, revisit your history and choose what to practise next.</p></article>
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-stories" id="success-stories">
+        <div class="container">
+            <div class="landing-stories-heading">
+                <div><span class="landing-section-kicker">SUCCESS STORIES</span><h2>Every career journey starts somewhere.</h2><p>A space to celebrate the people building confidence and taking their next step.</p></div>
+                <span class="landing-story-sample-note">Illustrative examples · Replace with verified stories</span>
+            </div>
+            <div class="row g-4">
+                <div class="col-12 col-md-4"><article class="landing-story-card"><span class="landing-story-label">SAMPLE STORY</span><div class="landing-quote-mark" aria-hidden="true">“</div><blockquote>Practising examples from my own experience helped me explain what I can bring to a team.</blockquote><div class="landing-story-person"><span class="landing-story-avatar avatar-blue">N</span><div><strong>Candidate story</strong><small>Administration · Illustrative example</small></div></div></article></div>
+                <div class="col-12 col-md-4"><article class="landing-story-card story-featured"><span class="landing-story-label">SAMPLE STORY</span><div class="landing-quote-mark" aria-hidden="true">“</div><blockquote>I used each session to get clearer, one question and one answer at a time.</blockquote><div class="landing-story-person"><span class="landing-story-avatar avatar-purple">T</span><div><strong>Candidate story</strong><small>Early career · Illustrative example</small></div></div></article></div>
+                <div class="col-12 col-md-4"><article class="landing-story-card"><span class="landing-story-label">SAMPLE STORY</span><div class="landing-quote-mark" aria-hidden="true">“</div><blockquote>Having a simple plan made my preparation feel more manageable.</blockquote><div class="landing-story-person"><span class="landing-story-avatar avatar-green">L</span><div><strong>Candidate story</strong><small>Career change · Illustrative example</small></div></div></article></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-audience-section">
+        <div class="container landing-audience-card">
+            <div><span class="landing-section-kicker">FOR PEOPLE AND PROGRAMMES</span><h2>Support candidates at every stage.</h2><p>CareerPrep can support individuals preparing for work, as well as training programmes helping groups build interview confidence.</p></div>
+            <a href="#get-started" class="landing-button-light">Explore the demo <span aria-hidden="true">→</span></a>
+        </div>
+    </section>
+
+    <section class="landing-final-cta" id="get-started">
+        <div class="container landing-final-inner">
+            <span class="landing-section-kicker">YOUR NEXT OPPORTUNITY STARTS HERE</span>
+            <h2>Prepare today. Show up with confidence.</h2>
+            <p>Start practising with Tsebe CareerPrep and take the next step in your career journey.</p>
+            <a asp-controller="@practiceController" asp-action="@practiceAction" class="btn landing-button-primary">Get started <span aria-hidden="true">→</span></a>
+        </div>
+    </section>
+</div>

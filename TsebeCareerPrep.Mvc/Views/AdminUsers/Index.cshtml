@@ -72,8 +72,8 @@
             }
             else
             {
-                <!-- DESKTOP AND TABLET TABLE -->
-                <div class="table-responsive d-none d-md-block">
+                <!-- DESKTOP TABLE -->
+                <div class="table-responsive d-none d-xl-block">
 
                     <table class="table table-bordered
                         table-striped align-middle">
@@ -91,6 +91,7 @@
                         <tbody>
                             @foreach (var user in Model)
                             {
+                                var isAdministrator = user.Roles?.Contains("Administrator") ?? false;
                                 <tr data-highlight-target="user-@user.Id"
                                     data-highlight-on-load="@(highlightedUserId == user.Id ? "true" : "false")"
                                     data-highlight-type="@highlightType">
@@ -123,7 +124,11 @@
                                     </td>
 
                                     <td>
-                                        @if (user.IsLockedOut)
+                                        @if (user.IsDeactivated)
+                                        {
+                                            <span class="badge bg-secondary">Deleted · ID preserved</span>
+                                        }
+                                        else if (user.IsLockedOut)
                                         {
                                             <span class="badge bg-danger">
                                                 Locked
@@ -138,7 +143,31 @@
                                     </td>
 
                                     <td>
-                                        @if (user.IsLockedOut)
+                                        @if (!user.IsDeactivated && User.IsInRole("SuperAdministrator") && isAdministrator &&
+                                             !(user.Roles?.Contains("SuperAdministrator") ?? false))
+                                        {
+                                            <form asp-controller="AdminUsers" asp-action="Demote" asp-route-id="@user.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-warning mb-1"
+                                                        onclick="return confirm('Remove Administrator access? This user will become a candidate.');">Demote</button>
+                                            </form>
+                                            <form asp-controller="AdminUsers" asp-action="Deactivate" asp-route-id="@user.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-danger mb-1"
+                                                        onclick="return confirm('Deactivate this administrator? Their account ID and history will be retained.');">Delete</button>
+                                            </form>
+                                        }
+                                        else if (!user.IsDeactivated && User.IsInRole("SuperAdministrator") && !isAdministrator &&
+                                                 !(user.Roles?.Contains("SuperAdministrator") ?? false))
+                                        {
+                                            <form asp-controller="AdminUsers" asp-action="Promote"
+                                                  asp-route-id="@user.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-primary mb-1"
+                                                        onclick="return confirm('Grant this user Administrator access?');">Make Administrator</button>
+                                            </form>
+                                        }
+                                        @if (!user.IsDeactivated && user.IsLockedOut)
                                         {
                                             <form asp-controller="AdminUsers"
                                                   asp-action="Unlock"
@@ -168,11 +197,13 @@
                 </div>
 
                 <!-- MOBILE USER CARDS -->
-                <div class="d-md-none">
+                <div class="row g-3 d-xl-none">
 
                     @foreach (var user in Model)
                     {
-                        <div class="card shadow-sm mb-3"
+                        var isAdministrator = user.Roles?.Contains("Administrator") ?? false;
+                        <div class="col-12 col-md-6">
+                        <div class="card shadow-sm h-100"
                              data-highlight-target="user-@user.Id"
                              data-highlight-on-load="@(highlightedUserId == user.Id ? "true" : "false")"
                              data-highlight-type="@highlightType">
@@ -182,11 +213,15 @@
                                 <div class="d-flex justify-content-between
                                     align-items-start gap-2 mb-3">
 
-                                    <span class="badge bg-primary">
-                                        User Account
+                                    <span class="badge @(user.IsDeactivated ? "bg-secondary" : "bg-primary")">
+                                        @(user.IsDeactivated ? "Deleted account" : "User account")
                                     </span>
 
-                                    @if (user.IsLockedOut)
+                                    @if (user.IsDeactivated)
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                    else if (user.IsLockedOut)
                                     {
                                         <span class="badge bg-danger">
                                             Locked
@@ -247,7 +282,40 @@
                                 </div>
 
                                 <!-- ACCOUNT ACTIONS -->
-                                @if (user.IsLockedOut)
+                                @if (user.IsDeactivated)
+                                {
+                                    <div class="alert alert-secondary py-2 mb-2">Deleted · ID and history preserved</div>
+                                }
+                                else if (User.IsInRole("SuperAdministrator") && isAdministrator &&
+                                         !(user.Roles?.Contains("SuperAdministrator") ?? false))
+                                {
+                                    <div class="d-grid gap-2 mb-2">
+                                        <form asp-controller="AdminUsers" asp-action="Demote" asp-route-id="@user.Id" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-warning w-100"
+                                                    onclick="return confirm('Remove Administrator access? This user will become a candidate.');">Demote to Candidate</button>
+                                        </form>
+                                        <form asp-controller="AdminUsers" asp-action="Deactivate" asp-route-id="@user.Id" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-danger w-100"
+                                                    onclick="return confirm('Deactivate this administrator? Their account ID and history will be retained.');">Delete Administrator</button>
+                                        </form>
+                                    </div>
+                                }
+                                else if (User.IsInRole("SuperAdministrator") && !isAdministrator &&
+                                         !(user.Roles?.Contains("SuperAdministrator") ?? false))
+                                {
+                                    <form asp-controller="AdminUsers" asp-action="Promote"
+                                          asp-route-id="@user.Id" method="post" class="mb-2">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-primary w-100"
+                                                onclick="return confirm('Grant this user Administrator access?');">
+                                            Make Administrator
+                                        </button>
+                                    </form>
+                                }
+
+                                @if (!user.IsDeactivated && user.IsLockedOut)
                                 {
                                     <form asp-controller="AdminUsers"
                                           asp-action="Unlock"
@@ -271,6 +339,7 @@
                                 }
 
                             </div>
+                        </div>
                         </div>
                     }
 

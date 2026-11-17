@@ -49,6 +49,26 @@ namespace TsebeCareerPrep.Api.Controllers
                     1)
                 : 0;
 
+            var promotedAdministrators = await _context.UserAdminActions.CountAsync(a => a.Action == "Promoted");
+            var demotedAdministrators = await _context.UserAdminActions.CountAsync(a => a.Action == "Demoted");
+            var deletedAdministrators = await _context.UserAdminActions.CountAsync(a => a.Action == "Deleted");
+            var restoredAccounts = await _context.UserAdminActions.CountAsync(a => a.Action == "Restored");
+            var recentUserAdminActions = await (
+                from action in _context.UserAdminActions.AsNoTracking()
+                join performer in _context.Users.AsNoTracking()
+                    on action.PerformedByUserId equals performer.Id into performers
+                from performer in performers.DefaultIfEmpty()
+                orderby action.OccurredUtc descending
+                select new
+                {
+                    action.TargetEmail,
+                    action.Action,
+                    action.OccurredUtc,
+                    PerformedBy = performer == null ? "System" : performer.Email
+                })
+                .Take(20)
+                .ToListAsync();
+
             return Ok(new
             {
                 TotalUsers = totalUsers,
@@ -57,7 +77,12 @@ namespace TsebeCareerPrep.Api.Controllers
                 InProgressSessions = inProgressSessions,
                 ActiveCategories = activeCategories,
                 TotalAnswers = totalAnswers,
-                CompletionRate = completionRate
+                CompletionRate = completionRate,
+                PromotedAdministrators = promotedAdministrators,
+                DemotedAdministrators = demotedAdministrators,
+                DeletedAdministrators = deletedAdministrators,
+                RestoredAccounts = restoredAccounts,
+                RecentUserAdminActions = recentUserAdminActions
             });
         }
     }

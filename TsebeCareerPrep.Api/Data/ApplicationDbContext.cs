@@ -35,6 +35,12 @@ namespace TsebeCareerPrep.Api.Data
         public DbSet<InterviewMisconceptionRule> InterviewMisconceptionRules
             => Set<InterviewMisconceptionRule>();
 
+        public DbSet<UserAdminAction> UserAdminActions
+            => Set<UserAdminAction>();
+
+        public DbSet<DeactivatedUser> DeactivatedUsers
+            => Set<DeactivatedUser>();
+
         // Stores the questions assigned to each interview session.
         // Question content is preserved independently of later edits.
         public DbSet<InterviewSessionQuestion> InterviewSessionQuestions
@@ -44,6 +50,24 @@ namespace TsebeCareerPrep.Api.Data
             ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<UserAdminAction>()
+                .Property(a => a.TargetUserId).HasMaxLength(450).IsRequired();
+            modelBuilder.Entity<UserAdminAction>()
+                .Property(a => a.TargetEmail).HasMaxLength(256).IsRequired();
+            modelBuilder.Entity<UserAdminAction>()
+                .Property(a => a.Action).HasMaxLength(32).IsRequired();
+            modelBuilder.Entity<UserAdminAction>()
+                .Property(a => a.PerformedByUserId).HasMaxLength(450).IsRequired();
+            modelBuilder.Entity<UserAdminAction>()
+                .HasIndex(a => new { a.Action, a.OccurredUtc });
+
+            modelBuilder.Entity<DeactivatedUser>()
+                .HasKey(u => u.UserId);
+            modelBuilder.Entity<DeactivatedUser>()
+                .Property(u => u.UserId).HasMaxLength(450);
+            modelBuilder.Entity<DeactivatedUser>()
+                .Property(u => u.Email).HasMaxLength(256).IsRequired();
 
             // Protect interview session updates from concurrent writes.
             modelBuilder.Entity<InterviewSession>()

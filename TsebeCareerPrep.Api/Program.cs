@@ -259,6 +259,51 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 
+// Deactivated accounts keep their Identity IDs and history, but lose API
+// access immediately even if they still hold an older authentication cookie.
+app.Use(async (context, next) =>
+{
+    if (context.User.Identity?.IsAuthenticated == true)
+    {
+        var userId = context.User.FindFirst(
+            System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            var db = context.RequestServices
+                .GetRequiredService<ApplicationDbContext>();
+            if (await db.DeactivatedUsers.AnyAsync(u => u.UserId == userId))
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return;
+            }
+
+                var elevatedClaims = context.User
+                    .FindAll(System.Security.Claims.ClaimTypes.Role)
+                    .Where(role => role.Value == "Administrator" || role.Value == "SuperAdministrator")
+                    .Select(role => role.Value)
+                    .ToList();
+                if (elevatedClaims.Count > 0)
+                {
+                    var userManager = context.RequestServices
+                        .GetRequiredService<UserManager<IdentityUser>>();
+                    var user = await userManager.FindByIdAsync(userId);
+                    IEnumerable<string> currentRoles = user == null
+                        ? Array.Empty<string>()
+                        : await userManager.GetRolesAsync(user);
+                    if (elevatedClaims.Any(role => !currentRoles.Contains(role)))
+                    {
+                        context.Response.StatusCode = user == null
+                            ? StatusCodes.Status401Unauthorized
+                            : StatusCodes.Status403Forbidden;
+                        return;
+                    }
+                }
+        }
+    }
+
+    await next();
+});
+
 app.UseAuthorization();
 
 

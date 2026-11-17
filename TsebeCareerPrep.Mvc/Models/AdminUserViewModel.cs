@@ -12,5 +12,6 @@ namespace TsebeCareerPrep.Mvc.Models
         public List<string> Roles { get; set; } = new();
 
         public bool IsLockedOut { get; set; }
+        public bool IsDeactivated { get; set; }
     }
 }

@@ -252,6 +252,46 @@
 
     </div>
 
+    @if (User.IsInRole("SuperAdministrator"))
+    {
+        <div class="card shadow-sm report-section mb-4">
+            <div class="card-body p-4">
+                <h4 class="report-section-title mb-3">Administrator Account History</h4>
+                <p class="text-muted">Recorded administrator changes since tracking began.</p>
+                <div class="row g-3">
+                    <div class="col-6 col-lg-3"><div class="border rounded p-3 h-100"><div class="report-label">Promotions</div><div class="report-value">@Model.PromotedAdministrators</div></div></div>
+                    <div class="col-6 col-lg-3"><div class="border rounded p-3 h-100"><div class="report-label">Demotions</div><div class="report-value">@Model.DemotedAdministrators</div></div></div>
+                    <div class="col-6 col-lg-3"><div class="border rounded p-3 h-100"><div class="report-label">Deleted accounts</div><div class="report-value">@Model.DeletedAdministrators</div></div></div>
+                    <div class="col-6 col-lg-3"><div class="border rounded p-3 h-100"><div class="report-label">Restored accounts</div><div class="report-value">@Model.RestoredAccounts</div></div></div>
+                </div>
+                <h5 class="fw-bold mt-4">Recent actions</h5>
+                @if (Model.RecentUserAdminActions.Count == 0)
+                {
+                    <p class="text-muted mb-0">No administrator changes have been recorded yet.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped align-middle mb-0">
+                            <thead><tr><th>Action</th><th>Account</th><th>Performed by</th><th>Date</th></tr></thead>
+                            <tbody>
+                                @foreach (var action in Model.RecentUserAdminActions)
+                                {
+                                    <tr>
+                                        <td>@action.Action</td>
+                                        <td class="text-break">@action.TargetEmail</td>
+                                        <td class="text-break">@(action.PerformedBy ?? "System")</td>
+                                        <td>@action.OccurredUtc.ToLocalTime().ToString("g")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
     <!-- INTERVIEW COMPLETION RATE -->
     <div class="card shadow-sm report-section mb-4">
 

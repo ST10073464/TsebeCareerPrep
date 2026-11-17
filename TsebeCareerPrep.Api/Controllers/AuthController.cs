@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using TsebeCareerPrep.Api.Data;
 using TsebeCareerPrep.Api.Models;
 
 namespace TsebeCareerPrep.Api.Controllers
@@ -12,13 +14,16 @@ namespace TsebeCareerPrep.Api.Controllers
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly ApplicationDbContext _context;
 
         public AuthController(
             UserManager<IdentityUser> userManager,
-            SignInManager<IdentityUser> signInManager)
+            SignInManager<IdentityUser> signInManager,
+            ApplicationDbContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _context = context;
         }
 
         // ======================================================
@@ -37,6 +42,47 @@ namespace TsebeCareerPrep.Api.Controllers
 
             if (existingUser != null)
             {
+                var deactivated = await _context.DeactivatedUsers
+                    .AnyAsync(u => u.UserId == existingUser.Id);
+                if (deactivated)
+                {
+                    var token = await _userManager.GeneratePasswordResetTokenAsync(existingUser);
+                    var reset = await _userManager.ResetPasswordAsync(existingUser, token, request.Password);
+                    if (!reset.Succeeded)
+                    {
+                        return BadRequest(new
+                        {
+                            message = "The account could not be restored. Check that the new password meets the password requirements.",
+                            errors = reset.Errors.Select(error => error.Description)
+                        });
+                    }
+
+                    _context.DeactivatedUsers.Remove(
+                        await _context.DeactivatedUsers.SingleAsync(u => u.UserId == existingUser.Id));
+                    _context.UserAdminActions.Add(new Models.UserAdminAction
+                    {
+                        TargetUserId = existingUser.Id,
+                        TargetEmail = existingUser.Email ?? request.Email,
+                        Action = "Restored",
+                        PerformedByUserId = existingUser.Id,
+                        OccurredUtc = DateTime.UtcNow
+                    });
+                    await _context.SaveChangesAsync();
+
+                    var existingRoles = await _userManager.GetRolesAsync(existingUser);
+                    var restoredRole = existingRoles.Contains("SuperAdministrator")
+                        ? "SuperAdministrator"
+                        : existingRoles.Contains("Administrator") ? "Administrator" : "Candidate";
+
+                    return StatusCode(StatusCodes.Status201Created, new
+                    {
+                        message = "Your previous account has been restored. Sign in using your new password.",
+                        userId = existingUser.Id,
+                        email = existingUser.Email,
+                        role = restoredRole
+                    });
+                }
+
                 return Conflict(new
                 {
                     message = "An account with this email already exists."
@@ -131,6 +177,12 @@ namespace TsebeCareerPrep.Api.Controllers
             // Find the user by email.
             var user = await _userManager
                 .FindByEmailAsync(request.Email);
+
+            if (user != null && await _context.DeactivatedUsers
+                    .AnyAsync(u => u.UserId == user.Id))
+            {
+                return Unauthorized(new { message = "This account is deactivated. Register again with this email to restore it." });
+            }
 
             if (user == null)
             {
