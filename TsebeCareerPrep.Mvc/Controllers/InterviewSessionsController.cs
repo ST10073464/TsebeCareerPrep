@@ -6,7 +6,7 @@ using System.Net;
 
 namespace TsebeCareerPrep.Mvc.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Candidate,SuperAdministrator")]
     public class InterviewSessionsController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;

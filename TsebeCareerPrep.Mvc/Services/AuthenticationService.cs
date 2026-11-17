@@ -84,5 +84,73 @@ namespace TsebeCareerPrep.Mvc.Services
                 AuthenticationCookie = authenticationCookie
             };
         }
+
+
+        public async Task<(bool Success, string Message)> RegisterAsync(
+            RegisterViewModel model)
+        {
+            var request = new
+            {
+                email = model.Email.Trim(),
+                password = model.Password,
+                confirmPassword = model.ConfirmPassword
+            };
+
+            using var response = await _httpClient.PostAsJsonAsync(
+                "api/Auth/register",
+                request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return (
+                    true,
+                    "Account created successfully. Please sign in."
+                );
+            }
+
+            if (response.StatusCode == HttpStatusCode.Conflict)
+            {
+                return (
+                    false,
+                    "An account with this email address already exists."
+                );
+            }
+
+            if (response.StatusCode == HttpStatusCode.BadRequest)
+            {
+                using var document = await System.Text.Json.JsonDocument
+                    .ParseAsync(await response.Content.ReadAsStreamAsync());
+
+                var root = document.RootElement;
+
+                if (root.TryGetProperty("errors", out var errors) &&
+                    errors.ValueKind == System.Text.Json.JsonValueKind.Array)
+                {
+                    var messages = errors.EnumerateArray()
+                        .Select(error => error.GetString())
+                        .Where(message => !string.IsNullOrWhiteSpace(message));
+
+                    return (
+                        false,
+                        string.Join(" ", messages)
+                    );
+                }
+
+                return (
+                    false,
+                    "Please check your registration details and try again."
+                );
+            }
+
+            // Unexpected API failures should not be presented
+            // to the candidate as successful registrations.
+            response.EnsureSuccessStatusCode();
+
+            return (
+                false,
+                "Registration could not be completed."
+            );
+        }
+
     }
 }

@@ -9,7 +9,7 @@ using TsebeCareerPrep.Api.Models;
 namespace TsebeCareerPrep.Api.Controllers
 {
     [ApiController]
-    [Authorize(Roles = "Administrator")]
+    [Authorize(Roles = "Administrator,SuperAdministrator")]
     [Route("api/admin/misconception-rules")]
     public class AdminMisconceptionRulesController : ControllerBase
     {

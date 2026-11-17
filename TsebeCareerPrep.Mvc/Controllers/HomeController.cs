@@ -15,31 +15,66 @@ namespace TsebeCareerPrep.Mvc.Controllers
             _logger = logger;
         }
 
+        // ======================================================
         // GET: /
+        // PUBLIC LANDING PAGE AND AUTHENTICATED REDIRECTION
+        // ======================================================
+
         public IActionResult Index()
         {
-            // Administrators should always land on
-            // their administration dashboard.
-            if (User.Identity?.IsAuthenticated == true &&
-                User.IsInRole("Administrator"))
+            if (User.Identity?.IsAuthenticated == true)
             {
-                return RedirectToAction(
-                    "Index",
-                    "Admin");
+                // SuperAdministrators and Administrators
+                // go directly to the administration dashboard.
+                if (User.IsInRole("SuperAdministrator") ||
+                    User.IsInRole("Administrator"))
+                {
+                    return RedirectToAction(
+                        "Index",
+                        "Admin");
+                }
+
+                // Candidates go directly to their
+                // interview categories.
+                if (User.IsInRole("Candidate"))
+                {
+                    return RedirectToAction(
+                        "Index",
+                        "InterviewCategories");
+                }
             }
 
-            // Candidates and unauthenticated visitors
-            // continue to the normal homepage.
+            // Only unauthenticated visitors see
+            // the public landing page.
             return View();
         }
 
+        // GET: /Home/Candidate
+        // Allows administrators to enter the Candidate area
+        // without changing their account role.
+        [Microsoft.AspNetCore.Authorization.Authorize(
+            Roles = "SuperAdministrator")]
+        [HttpGet]
+        public IActionResult Candidate()
+        {
+            return RedirectToAction(
+                "Index",
+                "InterviewCategories");
+        }
+
+        // ======================================================
         // GET: /Home/Privacy
+        // ======================================================
+
         public IActionResult Privacy()
         {
             return View();
         }
 
-        // Application error page.
+        // ======================================================
+        // APPLICATION ERROR PAGE
+        // ======================================================
+
         [ResponseCache(
             Duration = 0,
             Location = ResponseCacheLocation.None,

@@ -10,7 +10,9 @@ using TsebeCareerPrep.Mvc.Services;
 
 namespace TsebeCareerPrep.Mvc.Controllers
 {
-    [Authorize(Roles = "Administrator")]
+
+    [Authorize(Roles = "Administrator,SuperAdministrator")]
+
     public class AdminQuestionsController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;

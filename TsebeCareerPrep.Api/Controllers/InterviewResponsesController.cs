@@ -11,7 +11,7 @@ using TsebeCareerPrep.Api.Models;
 namespace TsebeCareerPrep.Api.Controllers
 {
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "Candidate,SuperAdministrator")]
     [Route("api/[controller]")]
     public class InterviewResponsesController : ControllerBase
     {

@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace TsebeCareerPrep.Mvc.Controllers
 {
-    [Authorize(Roles = "Administrator")]
+
+    [Authorize(Roles = "Administrator,SuperAdministrator")]
+
     public class AdminController : Controller
     {
         [HttpGet]

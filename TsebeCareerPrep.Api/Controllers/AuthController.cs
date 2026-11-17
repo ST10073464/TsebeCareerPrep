@@ -21,7 +21,11 @@ namespace TsebeCareerPrep.Api.Controllers
             _signInManager = signInManager;
         }
 
+        // ======================================================
         // POST: api/Auth/register
+        // PUBLIC CANDIDATE REGISTRATION
+        // ======================================================
+
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register(
@@ -39,14 +43,14 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
-            // Create the Identity user.
+            // Create a new Identity user.
             var user = new IdentityUser
             {
                 UserName = request.Email,
                 Email = request.Email
             };
 
-            // Identity securely hashes the password.
+            // Identity securely hashes and validates the password.
             var result = await _userManager.CreateAsync(
                 user,
                 request.Password);
@@ -61,17 +65,64 @@ namespace TsebeCareerPrep.Api.Controllers
                 });
             }
 
+            // Public registration must always assign
+            // the Candidate role.
+            // Never accept an Administrator role
+            // from registration input.
+
+            const string candidateRole = "Candidate";
+
+            var roleResult = await _userManager.AddToRoleAsync(
+                user,
+                candidateRole);
+
+            if (!roleResult.Succeeded)
+            {
+                // Remove the newly created account if
+                // its Candidate role cannot be assigned.
+                var deleteResult =
+                    await _userManager.DeleteAsync(user);
+
+                if (!deleteResult.Succeeded)
+                {
+                    return StatusCode(
+                        StatusCodes.Status500InternalServerError,
+                        new
+                        {
+                            message =
+                                "Registration could not be completed. Please contact support."
+                        });
+                }
+
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    new
+                    {
+                        message =
+                            "Account registration could not be completed. Please try again."
+                    });
+            }
+
+            // Registration completed successfully.
+            // The user can now sign in.
+
             return StatusCode(
                 StatusCodes.Status201Created,
                 new
                 {
-                    message = "Account registered successfully.",
+                    message =
+                        "Account registered successfully. You can now sign in.",
                     userId = user.Id,
-                    email = user.Email
+                    email = user.Email,
+                    role = candidateRole
                 });
         }
 
+        // ======================================================
         // POST: api/Auth/login
+        // EXISTING LOGIN FUNCTIONALITY
+        // ======================================================
+
         [HttpPost("login")]
         [AllowAnonymous]
         public async Task<IActionResult> Login(
@@ -102,7 +153,8 @@ namespace TsebeCareerPrep.Api.Controllers
             {
                 return Unauthorized(new
                 {
-                    message = "Account temporarily locked. Try again later."
+                    message =
+                        "Account temporarily locked. Try again later."
                 });
             }
 
@@ -111,7 +163,8 @@ namespace TsebeCareerPrep.Api.Controllers
             {
                 return Unauthorized(new
                 {
-                    message = "Login is not permitted for this account."
+                    message =
+                        "Login is not permitted for this account."
                 });
             }
 
@@ -125,14 +178,26 @@ namespace TsebeCareerPrep.Api.Controllers
             }
 
             // Retrieve the authenticated user's Identity roles.
+
             var roles = await _userManager.GetRolesAsync(user);
 
-            // Determine the appropriate application destination.
-            var role = roles.Contains("Administrator")
-                ? "Administrator"
-                : "Candidate";
+            string role;
 
-            // Return the authenticated user's details and role.
+            if (roles.Contains("SuperAdministrator"))
+            {
+                role = "SuperAdministrator";
+            }
+            else if (roles.Contains("Administrator"))
+            {
+                role = "Administrator";
+            }
+            else
+            {
+                role = "Candidate";
+            }
+
+
+            // Return authenticated user details and role.
             return Ok(new
             {
                 message = "Login successful.",
@@ -142,7 +207,11 @@ namespace TsebeCareerPrep.Api.Controllers
             });
         }
 
+        // ======================================================
         // POST: api/Auth/logout
+        // EXISTING LOGOUT FUNCTIONALITY
+        // ======================================================
+
         [HttpPost("logout")]
         [Authorize]
         public async Task<IActionResult> Logout()

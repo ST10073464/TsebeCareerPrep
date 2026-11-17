@@ -8,7 +8,7 @@ namespace TsebeCareerPrep.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Administrator")]
+    [Authorize(Roles = "Administrator,SuperAdministrator")]
     public class AdminUsersController : ControllerBase
     {
         private readonly UserManager<IdentityUser> _userManager;

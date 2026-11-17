@@ -93,7 +93,7 @@ namespace TsebeCareerPrep.Api.Controllers
         // GET: api/InterviewQuestions/admin/all
         // Administrator-only question management listing.
         [HttpGet("admin/all")]
-        [Authorize(Roles = "Administrator")]
+        [Authorize(Roles = "Administrator,SuperAdministrator")]
         public async Task<IActionResult> GetAllQuestionsForAdmin()
         {
             var questions = await _context.InterviewQuestions
@@ -118,7 +118,7 @@ namespace TsebeCareerPrep.Api.Controllers
         // POST: api/InterviewQuestions/admin
         // Create a new interview question.
         [HttpPost("admin")]
-        [Authorize(Roles = "Administrator")]
+        [Authorize(Roles = "Administrator,SuperAdministrator")]
         public async Task<IActionResult> CreateQuestion(
             [FromBody] CreateInterviewQuestionRequest request)
         {
@@ -188,7 +188,7 @@ namespace TsebeCareerPrep.Api.Controllers
         // PUT: api/InterviewQuestions/admin/9
         // Administrator-only interview question update.
         [HttpPut("admin/{id:int}")]
-        [Authorize(Roles = "Administrator")]
+        [Authorize(Roles = "Administrator,SuperAdministrator")]
         public async Task<IActionResult> UpdateQuestion(
             int id,
             [FromBody] UpdateInterviewQuestionRequest request)

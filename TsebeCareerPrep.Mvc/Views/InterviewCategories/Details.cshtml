@@ -63,14 +63,29 @@
                         </button>
                     </form>
                 }
+
                 else
                 {
+                    var selectedCategoryUrl = Url.Action(
+                        "Details",
+                        "InterviewCategories",
+                        new { id = Model.Id });
+
                     <a asp-controller="Account"
                        asp-action="Login"
+                       asp-route-returnUrl="@selectedCategoryUrl"
                        class="btn btn-primary">
                         Sign In to Start
                     </a>
+
+                    <a asp-controller="Account"
+                       asp-action="Register"
+                       asp-route-returnUrl="@selectedCategoryUrl"
+                       class="btn btn-outline-primary">
+                        Create Account
+                    </a>
                 }
+
 
                 <a asp-controller="InterviewQuestions"
                    asp-action="Category"

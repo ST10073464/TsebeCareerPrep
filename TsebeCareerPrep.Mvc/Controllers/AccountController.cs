@@ -24,14 +24,152 @@ namespace TsebeCareerPrep.Mvc.Controllers
             _authenticationService = authenticationService;
         }
 
+        // ======================================================
+        // GET: /Account/Register
+        // PUBLIC CANDIDATE REGISTRATION
+        // ======================================================
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult Register(string? returnUrl = null)
+        {
+            var safeReturnUrl =
+                !string.IsNullOrWhiteSpace(returnUrl) &&
+                Url.IsLocalUrl(returnUrl)
+                    ? returnUrl
+                    : null;
+
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                if (safeReturnUrl != null)
+                {
+                    return LocalRedirect(safeReturnUrl);
+                }
+
+                return RedirectToAction("Index", "Home");
+            }
+
+            ViewData["ReturnUrl"] = safeReturnUrl;
+
+            return View(new RegisterViewModel());
+        }
+
+        // ======================================================
+        // POST: /Account/Register
+        // CREATE A NEW CANDIDATE ACCOUNT
+        // ======================================================
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register(
+            RegisterViewModel model,
+            string? returnUrl = null)
+        {
+            // Only accept local return URLs.
+            var safeReturnUrl =
+                !string.IsNullOrWhiteSpace(returnUrl) &&
+                Url.IsLocalUrl(returnUrl)
+                    ? returnUrl
+                    : null;
+
+            ViewData["ReturnUrl"] = safeReturnUrl;
+
+            // Prevent signed-in users from registering again.
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                if (safeReturnUrl != null)
+                {
+                    return LocalRedirect(safeReturnUrl);
+                }
+
+                return RedirectToAction("Index", "Home");
+            }
+
+            // Validate registration details.
+            if (!ModelState.IsValid)
+            {
+                model.Password = string.Empty;
+                model.ConfirmPassword = string.Empty;
+
+                return View(model);
+            }
+
+            try
+            {
+                // Register the Candidate through the API.
+                var result =
+                    await _authenticationService.RegisterAsync(model);
+
+                if (!result.Success)
+                {
+                    ModelState.AddModelError(
+                        string.Empty,
+                        result.Message);
+
+                    model.Password = string.Empty;
+                    model.ConfirmPassword = string.Empty;
+
+                    return View(model);
+                }
+
+                // Registration succeeded.
+                // Candidate must sign in before starting.
+                TempData["RegistrationSuccess"] = result.Message;
+
+                // Preserve the selected interview category.
+                return RedirectToAction(
+                    "Login",
+                    "Account",
+                    new { returnUrl = safeReturnUrl });
+            }
+            catch (HttpRequestException)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "The registration service is unavailable. Please try again.");
+            }
+            catch (TaskCanceledException)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "The registration request timed out. Please try again.");
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "The registration service returned an unexpected response. Please try again.");
+            }
+
+            // Clear passwords before returning the form.
+            model.Password = string.Empty;
+            model.ConfirmPassword = string.Empty;
+
+            return View(model);
+        }
+
+        // ======================================================
+        // GET: /Account/Login
+        // EXISTING LOGIN FUNCTIONALITY
+        // ======================================================
+
         [HttpGet]
         [AllowAnonymous]
         public IActionResult Login(string? returnUrl = null)
         {
-            ViewData["ReturnUrl"] = returnUrl;
+            ViewData["ReturnUrl"] =
+                !string.IsNullOrWhiteSpace(returnUrl) &&
+                Url.IsLocalUrl(returnUrl)
+                    ? returnUrl
+                    : null;
 
             return View(new LoginViewModel());
         }
+
+        // ======================================================
+        // POST: /Account/Login
+        // ======================================================
 
         [HttpPost]
         [AllowAnonymous]
@@ -93,7 +231,7 @@ namespace TsebeCareerPrep.Mvc.Controllers
                 return View(model);
             }
 
-            // Read the authentication cookie issued by the API.
+            // Read the API authentication cookie.
             var cookieParts =
                 loginResult.AuthenticationCookie.Split('=', 2);
 
@@ -125,7 +263,7 @@ namespace TsebeCareerPrep.Mvc.Controllers
                     IsEssential = true
                 });
 
-            // Create the MVC authentication claims.
+            // Create MVC authentication claims.
             var claims = new List<Claim>
             {
                 new Claim(
@@ -145,14 +283,13 @@ namespace TsebeCareerPrep.Mvc.Controllers
                     loginResult.User.Role)
             };
 
-            // Create the MVC authentication identity.
             var identity = new ClaimsIdentity(
                 claims,
                 IdentityConstants.ApplicationScheme);
 
             var principal = new ClaimsPrincipal(identity);
 
-            // Issue a separate MVC authentication cookie.
+            // Issue the MVC authentication cookie.
             await HttpContext.SignInAsync(
                 IdentityConstants.ApplicationScheme,
                 principal,
@@ -162,25 +299,37 @@ namespace TsebeCareerPrep.Mvc.Controllers
                     AllowRefresh = true
                 });
 
-            // Respect valid local return URLs.
+            // Return to the selected interview category
+            // when a valid local return URL was supplied.
             if (!string.IsNullOrWhiteSpace(returnUrl) &&
                 Url.IsLocalUrl(returnUrl))
             {
                 return LocalRedirect(returnUrl);
             }
 
-            // Redirect administrators to their dashboard.
+            // Preserve the existing Administrator redirect.
+
             if (string.Equals(
-                loginResult.User.Role,
-                "Administrator",
-                StringComparison.OrdinalIgnoreCase))
+                    loginResult.User.Role,
+                    "SuperAdministrator",
+                    StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(
+                    loginResult.User.Role,
+                    "Administrator",
+                    StringComparison.OrdinalIgnoreCase))
             {
                 return RedirectToAction("Index", "Admin");
             }
 
-            // Candidates continue to the normal homepage.
+
+
+            // Candidates go to the homepage by default.
             return RedirectToAction("Index", "Home");
         }
+
+        // ======================================================
+        // GET: /Account/AccessDenied
+        // ======================================================
 
         [HttpGet]
         public IActionResult AccessDenied()
@@ -188,16 +337,18 @@ namespace TsebeCareerPrep.Mvc.Controllers
             return View();
         }
 
+        // ======================================================
+        // POST: /Account/Logout
+        // ======================================================
+
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
-            // Sign out of MVC.
             await HttpContext.SignOutAsync(
                 IdentityConstants.ApplicationScheme);
 
-            // Remove the separate API authentication ticket.
             Response.Cookies.Delete(
                 "TsebeCareerPrep.ApiAuth");
 

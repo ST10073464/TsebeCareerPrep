@@ -52,7 +52,7 @@ namespace TsebeCareerPrep.Api.Controllers
         // Administrator: View active and inactive categories.
         // =====================================================
         [HttpGet("admin/all")]
-        [Authorize(Roles = "Administrator")]
+        [Authorize(Roles = "Administrator,SuperAdministrator")]
         public async Task<IActionResult> GetAllCategoriesAdmin()
         {
             var categories = await _context.InterviewCategories
@@ -76,7 +76,7 @@ namespace TsebeCareerPrep.Api.Controllers
         // Administrator: Create a new interview category.
         // =====================================================
         [HttpPost("admin")]
-        [Authorize(Roles = "Administrator")]
+        [Authorize(Roles = "Administrator,SuperAdministrator")]
         public async Task<IActionResult> CreateCategoryAdmin(
             [FromBody] CreateInterviewCategoryRequest request)
         {
@@ -139,7 +139,7 @@ namespace TsebeCareerPrep.Api.Controllers
         // Administrator: Update an interview category.
         // =====================================================
         [HttpPut("admin/{id:int}")]
-        [Authorize(Roles = "Administrator")]
+        [Authorize(Roles = "Administrator,SuperAdministrator")]
         public async Task<IActionResult> UpdateCategoryAdmin(
             int id,
             [FromBody] UpdateInterviewCategoryRequest request)

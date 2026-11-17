@@ -7,7 +7,9 @@ using TsebeCareerPrep.Mvc.Models;
 
 namespace TsebeCareerPrep.Mvc.Controllers
 {
-    [Authorize(Roles = "Administrator")]
+
+    [Authorize(Roles = "Administrator,SuperAdministrator")]
+
     public class AdminCategoriesController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;

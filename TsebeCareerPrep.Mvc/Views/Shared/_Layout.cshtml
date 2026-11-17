@@ -39,7 +39,24 @@
         var isAuthenticated =
             User.Identity?.IsAuthenticated == true;
 
+        var isSuperAdministrator = isAuthenticated && User.IsInRole("SuperAdministrator");
+
         var isAdministrator = isAuthenticated && User.IsInRole("Administrator");
+
+        var canManage = isSuperAdministrator || isAdministrator;
+
+        var isAdminArea = currentController != null &&
+            currentController.StartsWith("Admin", StringComparison.OrdinalIgnoreCase);
+
+        var isPrivacyPage = currentController == "Home" &&
+            currentAction == "Privacy";
+
+        var showAdminNavigation = canManage &&
+            (isAdminArea || isPrivacyPage);
+
+        var roleLabel = isSuperAdministrator ? "Super Admin" :
+            isAdministrator ? "Admin" :
+            User.IsInRole("Candidate") ? "Candidate" : "User";
 
         var isAdminPage = currentController == "Admin";
 
@@ -72,25 +89,25 @@
             <div class="container">
 
                 <a class="navbar-brand fw-bold text-primary"
-                   asp-controller="@(isAdministrator ? "Admin" : "Home")"
+                   asp-controller="@(canManage ? "Admin" : isAuthenticated ? "InterviewCategories" : "Home")"
                    asp-action="Index">
                     Tsebe CareerPrep
                 </a>
 
 
                 <!-- Mobile login status and Menu button -->
-                <div class="mobile-header-controls">
+                <div class="mobile-header-controls d-lg-none">
 
                     @if (isAuthenticated)
                     {
-                        <span class="mobile-login-status"
+                        <span class="mobile-login-status d-lg-none"
                               role="status"
                               aria-label="You are signed in">
 
                             <span class="mobile-login-dot"
                                   aria-hidden="true"></span>
 
-                            Signed in
+                            @roleLabel
                         </span>
                     }
 
@@ -113,7 +130,7 @@
                      id="mainNavbar">
 
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        @if (isAdministrator)
+                        @if (showAdminNavigation)
                         {
                             <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Index">Dashboard</a></li>
                             <li class="nav-item"><a class="nav-link" asp-controller="AdminQuestions" asp-action="Index">Questions</a></li>
@@ -123,7 +140,10 @@
                         }
                         else
                         {
-                            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Home</a></li>
+                            @if (!isAuthenticated)
+                            {
+                                <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Home</a></li>
+                            }
                             <li class="nav-item"><a class="nav-link" asp-controller="InterviewCategories" asp-action="Index">Interview Practice</a></li>
                             @if (isAuthenticated)
                             {
@@ -132,6 +152,16 @@
                             }
                         }
                         <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Privacy">Privacy</a></li>
+                        @if (isSuperAdministrator)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link fw-semibold text-primary"
+                                   asp-controller="@(showAdminNavigation ? "Home" : "Admin")"
+                                   asp-action="@(showAdminNavigation ? "Candidate" : "Index")">
+                                    @(showAdminNavigation ? "Candidate View" : "Admin Dashboard")
+                                </a>
+                            </li>
+                        }
                     </ul>
 
                     <ul class="navbar-nav ms-auto align-items-lg-center">
@@ -141,6 +171,7 @@
                             <li class="nav-item">
                                 <span class="nav-link text-secondary">
                                     @User.Identity?.Name
+                                    <span class="badge bg-light text-dark border ms-1">@roleLabel</span>
                                 </span>
                             </li>
 
@@ -159,16 +190,29 @@
                                 </form>
                             </li>
                         }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="btn btn-primary w-100 mt-2 mt-lg-0"
-                                   asp-controller="Account"
-                                   asp-action="Login">
-                                    Log In
-                                </a>
-                            </li>
-                        }
+
+
+                    else
+                    {
+                        <li class="nav-item me-lg-2">
+                            <a class="btn btn-outline-primary w-100 mt-2 mt-lg-0"
+                               asp-controller="Account"
+                               asp-action="Login">
+                                Log In
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="btn btn-primary w-100 mt-2 mt-lg-0"
+                               asp-controller="Account"
+                               asp-action="Register"
+                               asp-route-returnUrl="@Url.Action("Index", "InterviewCategories")">
+                                Create Account
+                            </a>
+                        </li>
+                    }
+
+
 
                     </ul>
 
@@ -195,7 +239,7 @@
          MOBILE BOTTOM NAVIGATION
          ===================================== -->
 
-    @if (isAdministrator)
+    @if (showAdminNavigation)
     {
         <nav class="mobile-bottom-nav" aria-label="Administrator mobile navigation">
             <a asp-controller="Admin" asp-action="Index" class="mobile-nav-link @(isAdminPage ? "active" : "")" aria-current="@(isAdminPage ? "page" : null)">
@@ -210,6 +254,12 @@
             <a asp-controller="AdminUsers" asp-action="Index" class="mobile-nav-link @(currentController == "AdminUsers" ? "active" : "")" aria-current="@(currentController == "AdminUsers" ? "page" : null)">
                 <span class="mobile-nav-icon" aria-hidden="true">♙</span><span>Users</span>
             </a>
+            @if (isSuperAdministrator)
+            {
+                <a asp-controller="Home" asp-action="Candidate" class="mobile-nav-link">
+                    <span class="mobile-nav-icon" aria-hidden="true">⇄</span><span>Candidate</span>
+                </a>
+            }
         </nav>
     }
     else
@@ -217,7 +267,7 @@
     <nav class="mobile-bottom-nav"
          aria-label="Mobile navigation">
 
-        <a asp-controller="Home"
+        <a asp-controller="@(canManage ? "Admin" : isAuthenticated ? "InterviewCategories" : "Home")"
            asp-action="Index"
            class="mobile-nav-link @(isHomeActive ? "active" : "")"
            aria-current="@(isHomeActive ? "page" : null)">
@@ -232,7 +282,7 @@
                 </svg>
             </span>
 
-            <span>Home</span>
+            <span>@(canManage ? "Admin" : isAuthenticated ? "Practice" : "Home")</span>
         </a>
 
         <a asp-controller="InterviewCategories"

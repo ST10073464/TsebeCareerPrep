@@ -1,0 +1,139 @@
+@model TsebeCareerPrep.Mvc.Models.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Create Candidate Account";
+    var returnUrl = ViewData["ReturnUrl"] as string;
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-9 col-lg-6 col-xl-5">
+
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4 p-md-5">
+
+                    <!-- Heading -->
+                    <div class="text-center mb-4">
+                        <h1 class="h3 fw-bold mb-2">
+                            Create Your Account
+                        </h1>
+
+                        <p class="text-muted mb-0">
+                            Join Tsebe CareerPrep and start
+                            preparing for your next interview.
+                        </p>
+                    </div>
+
+                    <!-- Registration form -->
+                    <form asp-controller="Account"
+                          asp-action="Register"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+
+                        <input type="hidden"
+                               name="returnUrl"
+                               value="@returnUrl" />
+
+
+                        <!-- Validation summary -->
+                        <div asp-validation-summary="ModelOnly"
+                             class="text-danger mb-3"
+                             role="alert">
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-3">
+                            <label asp-for="Email"
+                                   class="form-label fw-semibold">
+                            </label>
+
+                            <input asp-for="Email"
+                                   type="email"
+                                   class="form-control form-control-lg"
+                                   placeholder="Enter your email address"
+                                   autocomplete="email" />
+
+                            <span asp-validation-for="Email"
+                                  class="text-danger small">
+                            </span>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="mb-3">
+                            <label asp-for="Password"
+                                   class="form-label fw-semibold">
+                            </label>
+
+                            <input asp-for="Password"
+                                   type="password"
+                                   class="form-control form-control-lg"
+                                   placeholder="Create a password"
+                                   autocomplete="new-password" />
+
+                            <span asp-validation-for="Password"
+                                  class="text-danger small">
+                            </span>
+
+                            <div class="form-text">
+                                Use at least 8 characters, including
+                                uppercase, lowercase, a number,
+                                and a special character.
+                            </div>
+                        </div>
+
+                        <!-- Confirm password -->
+                        <div class="mb-4">
+                            <label asp-for="ConfirmPassword"
+                                   class="form-label fw-semibold">
+                            </label>
+
+                            <input asp-for="ConfirmPassword"
+                                   type="password"
+                                   class="form-control form-control-lg"
+                                   placeholder="Confirm your password"
+                                   autocomplete="new-password" />
+
+                            <span asp-validation-for="ConfirmPassword"
+                                  class="text-danger small">
+                            </span>
+                        </div>
+
+                        <!-- Submit -->
+                        <button type="submit"
+                                class="btn btn-primary btn-lg w-100">
+                            Create Account
+                        </button>
+
+                    </form>
+
+                    <hr class="my-4" />
+
+                    <!-- Login link -->
+                    <p class="text-center mb-0">
+                        Already have an account?
+
+                        <a asp-controller="Account"
+                           asp-action="Login"
+                           asp-route-returnUrl="@returnUrl"
+                           class="fw-semibold text-decoration-none">
+                            Sign In
+                        </a>
+
+                    </p>
+
+                </div>
+            </div>
+
+            <p class="text-center text-muted small mt-4">
+                Tsebe CareerPrep — Interview Preparation Platform
+            </p>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

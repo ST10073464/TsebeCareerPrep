@@ -183,34 +183,41 @@ var app = builder.Build();
 
 
 // ======================================================
-// 10. ENSURE ADMINISTRATOR ROLE EXISTS
+// 10. ENSURE REQUIRED IDENTITY ROLES EXIST
 // ======================================================
 
 using (var scope = app.Services.CreateScope())
 {
-    var roleManager =
-        scope.ServiceProvider
-            .GetRequiredService<
-                RoleManager<IdentityRole>>();
+    var roleManager = scope.ServiceProvider
+        .GetRequiredService<RoleManager<IdentityRole>>();
 
-    const string administratorRole =
-        "Administrator";
+    // All supported application roles.
+    // Public registration assigns Candidate only.
+    // SuperAdministrator must be granted separately
+    // through a trusted administrative process.
 
-    if (!await roleManager.RoleExistsAsync(
-        administratorRole))
+    string[] requiredRoles =
     {
-        var result =
-            await roleManager.CreateAsync(
-                new IdentityRole(
-                    administratorRole));
+        "SuperAdministrator",
+        "Administrator",
+        "Candidate"
+    };
 
-        if (!result.Succeeded)
+    foreach (var roleName in requiredRoles)
+    {
+        if (!await roleManager.RoleExistsAsync(roleName))
         {
-            throw new InvalidOperationException(
-                "Unable to create the Administrator role: " +
-                string.Join("; ",
-                    result.Errors.Select(
-                        e => e.Description)));
+            var result = await roleManager.CreateAsync(
+                new IdentityRole(roleName));
+
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(
+                    $"Unable to create the {roleName} role: " +
+                    string.Join("; ",
+                        result.Errors.Select(
+                            error => error.Description)));
+            }
         }
     }
 }
@@ -226,8 +233,7 @@ if (app.Environment.IsDevelopment())
     {
         var context =
             scope.ServiceProvider
-                .GetRequiredService<
-                    ApplicationDbContext>();
+                .GetRequiredService<ApplicationDbContext>();
 
         await DatabaseSeeder.SeedAsync(context);
     }
